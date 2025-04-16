@@ -2,9 +2,10 @@ const scraper = require('../../services/scrapeTranscript');
 const { StatusCodes } = require('http-status-codes');
 const { BadRequestError, NotFoundError, CustomAPIError } = require('../../errors');
 const topicModels = require('../../models/topic/topicIndex');
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const FormData = require('form-data');
 
 const uploadUrls = async (req, res) => {
     try {
@@ -26,16 +27,6 @@ const uploadUrls = async (req, res) => {
                 if (!videoId) {
                     throw new BadRequestError('Invalid URL: Video ID not found');
                 }
-
-                // const existingResource = await topicModels.Resource.findOne({
-                //     source: url,
-                //     userId,
-                //     topicId
-                // });
-                
-                // if (existingResource) {
-                //     throw new BadRequestError('Resource already exists');
-                // }
 
                 const transcript = await scraper(url);
                 if (!transcript) {
@@ -69,7 +60,7 @@ const uploadUrls = async (req, res) => {
             topicId,
             userId
         });
-        const response=await axios.post(' http://127.0.0.1:8000/upload/',{
+        const response=await axios.post('http://127.0.0.1:8000/upload/',{
             type: 'video',
             source: aggregatedUrls,
             content: aggregatedTranscripts,
@@ -107,66 +98,59 @@ const uploadUrls = async (req, res) => {
 
 const uploadPdfs = async (req, res) => {
     try {
-        if (!req.files || req.files.length === 0) {
+        if (!req.files || !req.files['pdf'] || req.files['pdf'].length === 0) {
             throw new BadRequestError('No PDF files uploaded');
         }
 
         const topicId = req.body.topicId;
         const userId = req.user.userId;
-        const pdfFiles = req.files['pdf']; // Assuming you named the field 'pdf' in multer
+        const pdfFiles = req.files['pdf'];
 
-        const uploadedPdfPaths = [];
-        const apiResponses = [];
+        // Array for static paths (to be stored in the DB)
+        const staticPaths = [];
+        // Array for absolute paths to use when reading files from disk
+        const absolutePaths = [];
 
-        for (const pdfFile of pdfFiles) {
-            try {
-                // 1. Save PDF locally
-                const pdfPath = path.join(__dirname, '..', '..', 'uploads', 'pdfs', `${pdfFile.originalname}_${Date.now()}.pdf`);
-                await fs.writeFile(pdfPath, pdfFile.buffer);
-                uploadedPdfPaths.push(pdfPath);
+        for (const pdf of pdfFiles) {
+            // Static path used for serving (e.g. via /uploads)
+            const staticPath = `/uploads/pdf/${pdf.filename}`;
+            staticPaths.push(staticPath);
 
-                // 2. Send PDF to external API
-                const apiEndpoint = 'YOUR_EXTERNAL_API_ENDPOINT'; // Replace with your API endpoint
-                const formData = new FormData();
-                formData.append('pdf', fs.createReadStream(pdfPath), pdfFile.originalname);
-
-                const apiResponse = await axios.post(apiEndpoint, formData, {
-                    headers: {
-                        ...formData.getHeaders(),
-                        'Authorization': 'Bearer YOUR_API_KEY' // If needed
-                    }
-                });
-
-                apiResponses.push({
-                    pdfName: pdfFile.originalname,
-                    status: 'success',
-                    data: apiResponse.data
-                });
-
-            } catch (error) {
-                console.error(`Error processing PDF ${pdfFile.originalname}:`, error);
-                apiResponses.push({
-                    pdfName: pdfFile.originalname,
-                    status: 'failed',
-                    message: error.message
-                });
-            }
+            // Absolute path constructed using path.join
+            const absolutePath = path.join(__dirname, '..', '..', 'uploads', 'pdf', pdf.filename);
+            absolutePaths.push(absolutePath);
         }
 
-        // Create a new Resource document
+        // Create one FormData and append all PDF files using the "absolutePaths"
+        const formData = new FormData();
+        for (let i = 0; i < absolutePaths.length; i++) {
+            formData.append('pdf', fs.createReadStream(absolutePaths[i]), pdfFiles[i].filename);
+        }
+
+        formData.append('topicId', topicId);
+        formData.append('userId', userId);
+        formData.append('type', 'pdf');
+        // console.log('inside uploadpdf:---',formData);
+        const apiResponse = await axios.post('http://127.0.0.1:8000/upload/', formData, {
+            headers: formData.getHeaders()
+        });
+
         const newResource = await topicModels.Resource.create({
             type: 'pdf',
-            source: uploadedPdfPaths, // Store the local file paths
+            source: staticPaths, // save the static URLs in the DB
+            content: [],
             topicId,
             userId
         });
 
         return res.status(StatusCodes.CREATED).json({
             message: 'PDFs uploaded and processed successfully',
-            data: newResource,
-            apiResponses
+            apiResponse: {
+                status: apiResponse.status,
+                data: apiResponse.data,
+                headers: apiResponse.headers
+            }
         });
-
     } catch (error) {
         console.error('Error in uploadPdfs:', error);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

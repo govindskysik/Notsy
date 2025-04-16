@@ -14,10 +14,10 @@ const messageSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    relatedResourceIds: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Resource'
-    }]
+    // relatedResourceIds: [{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: 'Resource'
+    // }]
 });
 
 const chatSchema = new mongoose.Schema({
@@ -41,8 +41,8 @@ const chatSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    tempt:{
-        type:Number,
+    modeId:{
+        type:String,
     },
     messages: [messageSchema],
     summary: [

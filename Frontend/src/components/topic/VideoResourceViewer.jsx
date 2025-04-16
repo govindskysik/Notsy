@@ -76,47 +76,69 @@ const VideoResourceViewer = ({ resource }) => {
 
   return (
     <div className="h-full flex gap-6">
-      {/* Video Player Section */}
-      <div className="w-3/5 flex flex-col bg-white rounded-xl shadow-sm">
-        <Tab.Group defaultIndex={0} onChange={setSelectedVideoIndex}>
-          <Tab.List className="flex space-x-1 rounded-xl bg-primary/10 p-1 m-4">
-            {videos.map((_, idx) => (
-              <Tab
-                key={idx}
-                className={({ selected }) => `
-                  w-full rounded-lg py-2.5 text-sm font-medium leading-5 
-                  ${selected ? 'bg-white text-primary shadow' : 'text-primary/60'}
-                `}
-              >
-                Video {idx + 1}
-              </Tab>
-            ))}
-          </Tab.List>
+      {/* Left Section: Video Player and Transcript */}
+      <div className="w-3/5 flex flex-col gap-4">
+        {/* Video Player Container */}
+        <div className="bg-white rounded-xl shadow-sm p-4">
+          <Tab.Group defaultIndex={0} onChange={setSelectedVideoIndex}>
+            <Tab.List className="flex space-x-1 rounded-xl bg-primary/10 p-1 mb-4">
+              {videos.map((_, idx) => (
+                <Tab
+                  key={idx}
+                  className={({ selected }) => `
+                    w-full rounded-lg py-2.5 text-sm font-medium leading-5 
+                    ${selected ? 'bg-white text-primary shadow' : 'text-primary/60'}
+                  `}
+                >
+                  Video {idx + 1}
+                </Tab>
+              ))}
+            </Tab.List>
 
-          <Tab.Panels className="flex-1 p-4">
-            {videos.map((video, idx) => (
-              <Tab.Panel key={idx} className="h-full">
-                <div className="h-full flex flex-col">
-                  <div className="relative w-full pt-[56.25%]">
-                    <iframe
-                      className="absolute top-0 left-0 w-full h-full rounded-lg"
-                      src={`https://www.youtube.com/embed/${getVideoIdFromUrl(video)}`}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+            <Tab.Panels>
+              {videos.map((video, idx) => (
+                <Tab.Panel key={idx}>
+                  <div className="flex flex-col">
+                    <div className="relative w-full pt-[56.25%]">
+                      <iframe
+                        className="absolute top-0 left-0 w-full h-full rounded-lg"
+                        src={`https://www.youtube.com/embed/${getVideoIdFromUrl(video)}`}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500 truncate">{video}</p>
+                    </div>
                   </div>
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-500 truncate">{video}</p>
-                  </div>
-                </div>
-              </Tab.Panel>
+                </Tab.Panel>
+              ))}
+            </Tab.Panels>
+          </Tab.Group>
+        </div>
+
+        {/* Transcript Container */}
+        <div className="bg-white rounded-xl shadow-sm p-4 flex-1 overflow-hidden">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 sticky top-0 bg-white">
+            Video Transcript
+          </h2>
+          <div className="overflow-y-auto h-[calc(100%-3rem)] pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {resource?.content?.map((text, index) => (
+              <p key={index} className="mb-4 text-gray-600 text-sm leading-relaxed">
+                {text}
+              </p>
             ))}
-          </Tab.Panels>
-        </Tab.Group>
+            {(!resource?.content || resource.content.length === 0) && (
+              <p className="text-gray-500 italic text-sm">
+                No transcript available for this video.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Chat Interface */}
+      {/* Right Section: Chat Interface */}
       <div className="w-2/5 bg-white rounded-xl shadow-sm p-6">
         <div className="h-full flex flex-col">
           {/* Messages Area */}
