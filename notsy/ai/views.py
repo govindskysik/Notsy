@@ -350,7 +350,7 @@ class grapher(APIView):
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "target": {"type": "integer"},
+                                            "target": {"type": "string"},
                                             "reason": {"type": "string"}
                                         },
                                         "required": ["target", "reason"],
@@ -411,7 +411,7 @@ class addNode(APIView):
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "target": {"type": "integer"},
+                                            "target": {"type": "string"},
                                             "reason": {"type": "string"}
                                         },
                                         "required": ["target", "reason"],
