@@ -7,4 +7,7 @@ urlpatterns = [
     path('upload/', miniRag.as_view(), name='miniRag'),
     path('querry/', query.as_view(), name='querry'),
     path('moded_query/', modedQuery.as_view(), name='moded_query'),
+    path('notes/', makeNotes.as_view(), name='Revision notes'),
+    path('cards/', makeFlashCards.as_view(), name='Flash Cards'),
+    path('quiz/', makeQuizCards.as_view(), name='Quiz Cards'),
 ]

@@ -203,6 +203,141 @@ def get_response(input,max_tokens=-1, temp=-1 ,model="gpt-4.1"):
         raise Exception(f"Error in getting response from OpenAI: {str(e)}")
     return response
 
+def noteGenerator(context, model="gpt-4.1"):
+    client = initialize_openai_client()
+    summary = client.responses.create(
+        model=model,
+        input=context,
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "generate_revision_notes",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "title": { "type": "string"},
+                        "introduction": { "type": "string" },
+                        "core_concepts": {
+                            "type": "array",
+                            "items": { "type": "string", "description": "Detailed explanation of core concept of the topic"}
+                        },
+                        "example_or_use_case": { "type": "string", "description": "Example or use case of the topic, Fill it only if you some good examples otherwise leave it empty" },
+                        "common_confusions": {
+                            "type": "array",
+                            "items": { "type": "string", "description": "Common confusions/pitfalls students fall into, Fill it only if you something important otherwise leave it empty" }
+                        },
+                        "memory_tip": { "type": "string" , "description": "A memory tip to remember the topic, Fill it only if you some good tip otherwise leave it empty" }
+                    },
+                    "required": ["title", "introduction", "core_concepts", "example_or_use_case", "common_confusions", "memory_tip"],
+                    "additionalProperties": False
+                },
+                "strict": True
+            }
+        }
+    )
+    try:
+        return json.loads(summary.output_text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in model response: {summary.output_text[:200]}...") from e
+
+def flashcardGenerator(context, model="gpt-4.1"):
+    client = initialize_openai_client()
+    response = client.responses.create(
+        model=model,
+        input=context,
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "generate_flashcards",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "topic": { "type": "string" },
+                        "flashcards": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "concept": {
+                                        "type": "string",
+                                        "description": "A concise fact, formula, or concept relevant to the topic"
+                                    },
+                                    "explanation": {
+                                        "type": "string",
+                                        "description": "A short explanation, use-case, or memory aid for the concept"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "enum": ["red", "yellow", "green"],
+                                        "description": "Importance level: red = most critical, yellow = important, green = regular"
+                                    }
+                                },
+                                "required": ["concept", "explanation", "color"],
+                                "additionalProperties": False
+                            }
+                        }
+                    },
+                    "required": ["topic", "flashcards"],
+                    "additionalProperties": False
+                },
+                "strict": True
+            }
+        }
+    )
+    try:
+        return json.loads(response.output_text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in model response: {response.output_text[:200]}...") from e
+
+def quizGenerator(context, model="gpt-4.1"):
+    client = initialize_openai_client()
+    response = client.responses.create(
+        model=model,
+        input=context,
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "generate_progressive_quiz",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "topic": { "type": "string" },
+                        "questions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "question": {
+                                        "type": "string",
+                                        "description": "A single multiple-choice or short-answer style question that tests knowledge of the topic"
+                                    },
+                                    "answer": {
+                                        "type": "string",
+                                        "description": "The correct answer or explanation"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "enum": ["green", "yellow", "red"],
+                                        "description": "Difficulty level: green = easy, yellow = medium, red = hard/tricky"
+                                    }
+                                },
+                                "required": ["question", "answer", "color"],
+                                "additionalProperties": False
+                            }
+                        }
+                    },
+                    "required": ["topic", "questions"],
+                    "additionalProperties": False
+                },
+                "strict": True
+            }
+        }
+    )
+    try:
+        return json.loads(response.output_text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in model response: {response.output_text[:200]}...") from e
+
 def summarize(client, text):
     summary = client.responses.create(
         model="gpt-4o-mini",

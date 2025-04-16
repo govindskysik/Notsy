@@ -82,13 +82,13 @@ class augmentedRespond(APIView):
 
         # Append truncated summary
         for i, summ in enumerate(summary[:-2]):
-            context.append({"role": "user", "content": f"[SUMMARY #{i+1}] {summ}"})
+            context.append(summ)
 
         # Append last 20 messages
         messages_trunc = messages[-20:]
         for i in range(0, len(messages_trunc), 2):
-            context.append({"role": "user", "content": messages_trunc[i]})
-            context.append({"role": "assistant", "content": messages_trunc[i+1]})
+            context.append(messages_trunc[i])
+            context.append(messages_trunc[i+1])
 
         metadata = {}
         try:
@@ -114,7 +114,110 @@ class augmentedRespond(APIView):
             "metadata": metadata  # First matched metadata; optional to return more
         }, status=status.HTTP_200_OK)
 
+class makeNotes(APIView):
+    def post(self, request):
+        messages = request.data.get('messages')
+        summary = request.data.get('summary')
+        topic_id = request.data.get('topicId')
+        user_id = request.data.get('userId')
 
+        if messages is None or summary is None:
+            return Response({"error": "No messages or summary provided."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(messages) % 2 != 0:
+            return Response({"error": "Odd number of messages. Every user message must be followed by assistant response."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        context = []
+
+        for i, summ in enumerate(summary[:-2]):
+            context.append(summ)
+        # Append last 20 messages
+        messages_trunc = messages[-20:]
+        for i in range(0, len(messages_trunc) - 1, 2):
+            context.append(messages_trunc[i])
+            context.append(messages_trunc[i + 1])
+        mini_rag_results = utils.query("Key academic concepts", user_id, 5)
+        filtered_rag = [doc for doc in mini_rag_results if doc.get("metadata", {}).get("topic_id") == topic_id]
+        for j, doc in enumerate(filtered_rag):
+            content = doc.get("content", "")
+            context.append({"role": "system", "content": f"[RAG #{j+1}] {content}"})
+
+        context.append({"role": "user", "content": "make detailed Notes of the topic from the above conversation and retrived content. Be very detailed, length is important."})
+
+        try:
+            notes = utils.noteGenerator(context=context)
+        except Exception as e:
+            return Response({"error": f'Unable to generate Notes, Error {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"message": notes}, status=status.HTTP_200_OK)
+    
+class makeFlashCards(APIView):
+    def post(self, request):
+        messages = request.data.get('messages')
+        summary = request.data.get('summary')
+        topic_id = request.data.get('topicId')
+        user_id = request.data.get('userId')
+
+        if messages is None or summary is None:
+            return Response({"error": "No messages or summary provided."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(messages) % 2 != 0:
+            return Response({"error": "Odd number of messages. Every user message must be followed by assistant response."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        context = []
+
+        for i, summ in enumerate(summary[:-2]):
+            context.append(summ)
+        # Append last 20 messages
+        messages_trunc = messages[-20:]
+        for i in range(0, len(messages_trunc) - 1, 2):
+            context.append(messages_trunc[i])
+            context.append(messages_trunc[i + 1])
+        mini_rag_results = utils.query("Key academic concepts", user_id, 5)
+        filtered_rag = [doc for doc in mini_rag_results if doc.get("metadata", {}).get("topic_id") == topic_id]
+        for j, doc in enumerate(filtered_rag):
+            content = doc.get("content", "")
+            context.append({"role": "system", "content": f"[RAG #{j+1}] {content}"})
+
+        context.append({"role": "user", "content": "Make Flash cards from the above conversation as well as the retrieved content. make meaningful flash cards that will help the student revise the topic and learn important facts and formulas for exam."})
+
+        try:
+            notes = utils.flashcardGenerator(context=context)
+        except Exception as e:
+            return Response({"error": f'Unable to generate Notes, Error {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"message": notes}, status=status.HTTP_200_OK)
+    
+class makeQuizCards(APIView):
+    def post(self, request):
+        messages = request.data.get('messages')
+        summary = request.data.get('summary')
+        topic_id = request.data.get('topicId')
+        user_id = request.data.get('userId')
+
+        if messages is None or summary is None:
+            return Response({"error": "No messages or summary provided."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(messages) % 2 != 0:
+            return Response({"error": "Odd number of messages. Every user message must be followed by assistant response."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        context = []
+
+        for i, summ in enumerate(summary[:-2]):
+            context.append(summ)
+        # Append last 20 messages
+        messages_trunc = messages[-20:]
+        for i in range(0, len(messages_trunc) - 1, 2):
+            context.append(messages_trunc[i])
+            context.append(messages_trunc[i + 1])
+        mini_rag_results = utils.query("Key academic concepts", user_id, 5)
+        filtered_rag = [doc for doc in mini_rag_results if doc.get("metadata", {}).get("topic_id") == topic_id]
+        for j, doc in enumerate(filtered_rag):
+            content = doc.get("content", "")
+            context.append({"role": "system", "content": f"[RAG #{j+1}] {content}"})
+
+        context.append({"role": "user", "content": "Make Quiz from the above conversation as well as the retrieved content. make meaningful quiz that will help the student practice the topic. It should be prograssively harder. Do not back if necessary, make sure the last part of the quiz is master level."})
+
+        try:
+            notes = utils.flashcardGenerator(context=context)
+        except Exception as e:
+            return Response({"error": f'Unable to generate Notes, Error {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"message": notes}, status=status.HTTP_200_OK)
 
 class miniRag(APIView):
     def post(self, request):
