@@ -14,9 +14,6 @@ class helloWorldView(APIView):
     def post(self, request):
         return Response({"message": "Hello, Posted"}, status=status.HTTP_200_OK)
     
-def clean_messages_for_gpt(messages):
-    return [{"role": msg["role"], "content": msg["content"]} for msg in messages if "role" in msg and "content" in msg]
-    
 class respond(APIView):
     # Get from students RAG, Normal Response nothing else
     def post(self, request):
@@ -29,6 +26,7 @@ class respond(APIView):
             return Response({"error": "Odd number of messages provided. This is not possible every user message must be followed by assistants response"}, status=status.HTTP_400_BAD_REQUEST)
         if user_query is None:
             return Response({"error": "No user querry provided by the user, Please ask a question for assistant to respond"}, status=status.HTTP_400_BAD_REQUEST)
+        messages = utils.clean_messages_for_gpt(messages)
         instruction = { "role": "developer", "content": "You are an educational assistant for engineering students. You have to teach and help user understand it"}
         context = [instruction]
         messages_trunc = messages[-20:]
@@ -62,6 +60,8 @@ class augmentedRespond(APIView):
             return Response({"error": "Odd number of messages. Every user message must be followed by assistant response."}, status=status.HTTP_400_BAD_REQUEST)
         if user_query is None:
             return Response({"error": "No user query provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        messages = utils.clean_messages_for_gpt(messages)
 
         # Initialize context with instruction
         instructions = {
@@ -126,6 +126,7 @@ class makeNotes(APIView):
         if len(messages) % 2 != 0:
             return Response({"error": "Odd number of messages. Every user message must be followed by assistant response."}, status=status.HTTP_400_BAD_REQUEST)
         
+        messages = utils.clean_messages_for_gpt(messages)
         context = []
 
         for i, summ in enumerate(summary[:-2]):
@@ -161,6 +162,7 @@ class makeFlashCards(APIView):
         if len(messages) % 2 != 0:
             return Response({"error": "Odd number of messages. Every user message must be followed by assistant response."}, status=status.HTTP_400_BAD_REQUEST)
         
+        messages = utils.clean_messages_for_gpt(messages)
         context = []
 
         for i, summ in enumerate(summary[:-2]):
@@ -196,6 +198,7 @@ class makeQuizCards(APIView):
         if len(messages) % 2 != 0:
             return Response({"error": "Odd number of messages. Every user message must be followed by assistant response."}, status=status.HTTP_400_BAD_REQUEST)
         
+        messages = utils.clean_messages_for_gpt(messages)
         context = []
 
         for i, summ in enumerate(summary[:-2]):
@@ -227,30 +230,61 @@ class miniRag(APIView):
         topicId = request.data.get('topicId')
         userId = request.data.get('userId')
         createdAt = request.data.get('createdAt')
-        if data_type is None or source is None or topicId is None or createdAt is None:
-            return Response({"error": "No type, source or topicId provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if data_type is None or topicId is None or createdAt is None:
+            return Response({"error": "Missing required fields: type, topicId or createdAt"}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             if data_type == 'pdf':
-                for url in source:
-                    pdf_text = utils.get_pdf_text(url)
+                if 'pdf' not in request.FILES:
+                    return Response({"error": "No PDF files found in request"}, status=status.HTTP_400_BAD_REQUEST)
+
+                pdf_files = request.FILES.getlist('pdf')
+                for pdf_file in pdf_files:
                     try:
-                        utils.upsert_text(text=pdf_text, namespace=userId, metadata={"text": pdf_text, "url": url, "topic_id": topicId, "user_id": userId, "created_at": createdAt})
+                        pdf_text = utils.get_pdf_text(pdf_file)
+                        utils.upsert_text(
+                            text=pdf_text,
+                            namespace=userId,
+                            metadata={
+                                "text": pdf_text[:500],
+                                "filename": pdf_file.name,
+                                "topic_id": topicId,
+                                "user_id": userId,
+                                "created_at": createdAt
+                            }
+                        )
                     except Exception as e:
-                        return Response({"error": f'Unable to Upsert pdf, Error: {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        return Response({"error": f'Unable to Upsert uploaded PDF: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
             elif data_type == 'video':
-                if len(source) != len(content): return Response({"error": f"Length of source and content must be same for {data_type}"}, status=status.HTTP_400_BAD_REQUEST)
+                if source is None or content is None:
+                    return Response({"error": "Missing source/content for video"}, status=status.HTTP_400_BAD_REQUEST)
+                if len(source) != len(content):
+                    return Response({"error": f"Length of source and content must be same for {data_type}"}, status=status.HTTP_400_BAD_REQUEST)
                 for i in range(len(source)):
                     video_text = content[i]
                     try:
-                        utils.upsert_text(text=video_text, namespace=userId, metadata={"text": video_text, "url": source[i], "topic_id": topicId, "user_id": userId, "created_at": createdAt})
+                        utils.upsert_text(
+                            text=video_text,
+                            namespace=userId,
+                            metadata={
+                                "text": video_text,
+                                "url": source[i],
+                                "topic_id": topicId,
+                                "user_id": userId,
+                                "created_at": createdAt
+                            }
+                        )
                     except Exception as e:
-                        return Response({"error": f'Unable to Upsert video, Error: {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        return Response({"error": f'Unable to Upsert video, Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
                 return Response({"error": "Invalid type provided"}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         except Exception as e:
-            return Response({"error": f'Python unable to process {data_type},\nError {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response({"message": f"Successfuly saved {data_type} to vector-db"}, status=status.HTTP_200_OK)
+            return Response({"error": f'Python unable to process {data_type},\nError {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"message": f"Successfully saved {data_type} to vector-db"}, status=status.HTTP_200_OK)
     
 class query(APIView):
     def post(self, request):

@@ -132,6 +132,9 @@ def query(text, namespace, top_k):
 
     return result
 
+def clean_messages_for_gpt(messages):
+    return [{"role": msg["role"], "content": msg["content"]} for msg in messages if "role" in msg and "content" in msg]
+
 def moded_query(text, mode, user_id, topic_id):
     # Get both gfg and user specific 
     context = []
@@ -356,28 +359,14 @@ def summarize(client, text):
     )
     return summary
 
-def get_pdf_text(pdf_url):
+def get_pdf_text(file):
     try:
-        response = requests.get(pdf_url, timeout=10)
-        if response.status_code != 200: raise Exception(f"Failed to download PDF. Status code: {response.status_code}")
-    except requests.RequestException as e:
-        raise Exception(f"Failed to download PDF, Error: {str(e)}")
-    
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-            tmp_file.write(response.content)
-            tmp_pdf_path = tmp_file.name
-
-        reader = PdfReader(tmp_pdf_path)
+        reader = PdfReader(file)
         text = ""
         for page in reader.pages:
             extracted = page.extract_text()
             if extracted:
                 text += extracted
+        return text
     except Exception as e:
-        raise Exception(f"Failed to Extract PDF, Error: {str(e)}")
-    finally:
-        if os.path.exists(tmp_pdf_path):
-            os.remove(tmp_pdf_path)
-
-    return text
+        raise Exception(f"PDF extraction failed: {str(e)}")
