@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from . import utils
-import os
+import json
 
 # client = utils.initialize_openai_client()
 
@@ -310,3 +310,154 @@ class modedQuery(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": f'Python unable to process {type},\nError {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class grapher(APIView):
+    def post(self, request):
+        topics = request.data.get('topics')
+        # topics = {0: "Arrays",1: "Linked Lists",2: "Stacks",3: "Queues",4: "Hash Tables",5: "Binary Trees",6: "Binary Search Trees",
+        #     7: "Heaps",8: "Graphs (DFS, BFS)",9: "Shortest Path (Dijkstra, Bellman-Ford)",10: "Minimum Spanning Tree (Prim, Kruskal)",
+        #     11: "Sorting (QuickSort, MergeSort)",12: "Searching (Binary Search)",13: "Dynamic Programming",14: "Greedy Algorithms",15: "Backtracking",
+        #     16: "Divide and Conquer",17: "Trie",18: "Segment Trees",19: "AVL Trees",20: "Red-Black Trees",21: "B-Trees",
+        #     22: "NP-Completeness",23: "Sliding Window Technique",24: "Two Pointers Technique"
+        #     }
+        client = utils.initialize_openai_client()
+        message = f"topics = {str(topics)}"
+        try:
+            response = client.responses.create(
+                model="gpt-4o",
+                temperature=0.0,
+                input=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an educational assistant. Your job is to organize the user's notes into a graph structure. "
+                            "You will receive topic names and their indices. You must return a labeled adjacency list: "
+                            "each topic's index should map to a list of objects representing related topics. "
+                            "Each object must include the related topic index as `target` and a short explanation `reason` (1-5 words) for the connection."
+                        )
+                    },
+                    {"role": "user", "content": message}
+                ],
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "labeled_notes_graph",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                str(k): {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "target": {"type": "integer"},
+                                            "reason": {"type": "string"}
+                                        },
+                                        "required": ["target", "reason"],
+                                        "additionalProperties": False
+                                    }
+                                } for k in topics.keys()
+                            },
+                            "required": list(map(str, topics.keys())),
+                            "additionalProperties": False
+                        },
+                        "strict": True
+                    }
+                }
+            )
+        except Exception as e:
+            return Response({"error": f'Failed to get response,\nError {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(json.loads(response.output_text), status=status.HTTP_200_OK)
+
+class addNode(APIView):
+    def post(self, request):
+        old_graph = request.data.get('Graph')           # { "0": [...], "1": [...] }
+        new_node = request.data.get('newNode')          # { "nodeId": 23, "label": "Greedy" }
+        topic_labels = request.data.get('topics')       # { "0": "DP", "1": "Backtracking", ... }
+
+        if not old_graph or not new_node or not topic_labels:
+            return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+
+        node_id = new_node.get('nodeId')
+        label = new_node.get('label')
+
+        if node_id is None or label is None:
+            return Response({"error": "Invalid newNode format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Format prompt for GPT
+        client = utils.initialize_openai_client()
+        prompt = (
+            f"You are expanding a topic graph. A new topic '{label}' (ID: {node_id}) has been added.\n"
+            f"Here are the existing topics:\n"
+            f"{json.dumps(topic_labels, indent=4)}\n"
+            f"{json.dumps(old_graph, indent=4)}\nold graph for reference\n"
+            f"Based on their meanings, return a list of nodes this new topic is connected to, along with a short explanation `reason` (1-5 words) for the connection."
+        )
+
+        try:
+            response = client.responses.create(
+                model="gpt-4o",
+                temperature=0.0,
+                input=prompt,
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "labeled_notes_graph",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                str(node_id): {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "target": {"type": "integer"},
+                                            "reason": {"type": "string"}
+                                        },
+                                        "required": ["target", "reason"],
+                                        "additionalProperties": False
+                                    }
+                                }
+                            },
+                            "required": [str(node_id)],
+                            "additionalProperties": False
+                        },
+                        "strict": True
+                    }
+                }
+            )
+        except Exception as e:
+            return Response({"error": f"Failed to get response,\nError: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            edges = json.loads(response.output_text)
+        except Exception as e:
+            return Response({"error": f"Error parsing GPT response: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        node_id_str = str(node_id)
+        if node_id_str not in old_graph:
+            old_graph[node_id_str] = []
+
+        # Loop over edges specific to this node
+        for edge in edges.get(node_id_str, []):
+            target_id = str(edge["target"])
+            reason = edge["reason"]
+
+            old_graph[node_id_str].append({
+                "target": int(target_id),
+                "reason": reason
+            })
+
+            if target_id not in old_graph:
+                old_graph[target_id] = []
+
+            old_graph[target_id].append({
+                "target": int(node_id),
+                "reason": reason
+            })
+
+        return Response({
+            "message": f"Node '{label}' added and connected with labeled bidirectional edges.",
+            "updatedGraph": old_graph,
+            node_id_str: edges.get(node_id_str, [])
+        }, status=status.HTTP_200_OK)
