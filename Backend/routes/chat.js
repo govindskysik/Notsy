@@ -5,7 +5,7 @@ const chatController=require('../controllers/chat');
 
 router.post('/',chatController.chat);
 // router.get('/',folderController.getAllFolders);
-// router.get('/:id',folderController.getFolderById);
+router.get('/:id',chatController.getChat);
 // router.delete('/:id',folderController.deleteFolder);
 
 module.exports=router;

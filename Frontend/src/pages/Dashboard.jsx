@@ -100,7 +100,7 @@ const Dashboard = () => {
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully");
-    navigate("/auth/login");
+    navigate("/"); // Changed from /auth/login to /
   };
 
   return (
