@@ -1,0 +1,248 @@
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from pinecone import Pinecone, ServerlessSpec
+from dotenv import load_dotenv
+from openai import OpenAI
+from PyPDF2 import PdfReader
+import pandas as pd
+import requests
+import tiktoken
+import tempfile
+import uuid
+import json
+import os
+
+load_dotenv()
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+OPENAI_DF = pd.read_csv(os.path.join(BASE_DIR, 'openai_docs_chunked.csv'))
+GFG_DF = pd.read_csv(os.path.join(BASE_DIR, 'gfg_cleaned.csv'))
+
+def initialize_openai_client():
+    key = os.getenv('OPENAI_API_KEY')
+    org_key = os.getenv('OPENAI_ORG_KEY')
+    project_id = os.getenv('OPENAI_PROJECT_ID')
+
+    client = OpenAI(
+        api_key=key,
+        organization=org_key,
+        project=project_id,
+    )
+    
+    return client
+
+def initialize_pincone():
+    pine_key = os.getenv('PINE_API_KEY')
+    host = os.getenv('PINE_HOST')
+    pc = Pinecone(api_key=pine_key)
+    index = pc.Index(host=host)
+    return index 
+
+def get_embedding(client,text, model="text-embedding-3-large"):
+    text = text.replace("\n", " ")
+    return client.embeddings.create(input = [text], model=model).data[0].embedding
+
+def create_chunks(text):
+    encoding = tiktoken.encoding_for_model("text-embedding-3-large")
+    tokens = encoding.encode(text)
+    data=[]
+    if(len(tokens)> 8180):
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=8180,
+            chunk_overlap=200,
+        )
+        chunks = text_splitter.split_text(text)
+        for i, chunk in enumerate(chunks):
+            data.append(chunk)  
+    else:
+        data.append(text)
+    return data
+
+def upsert_text(text, metadata, namespace):
+    # This function is used to upsert a Single string of text to Pinecone
+    chunks = create_chunks(text)
+    client = initialize_openai_client()
+    index = initialize_pincone()
+
+    if 'topic_id' not in metadata: raise("topic_id not found in metadata")
+    if 'user_id' not in metadata: raise("user_id not found in metadata")
+
+    for i, text in enumerate(chunks):
+        try:
+            vector = {
+                'id': f'vec-{metadata['created_at']}-{metadata['url']}-i',
+                'values': get_embedding(client=client,text=text),
+                'metadata': metadata
+            }
+            index.upsert(vectors = [vector], namespace=namespace)
+        except Exception as e:
+            raise Exception(f"Error in upserting data to pinecone: {str(e)}")
+
+def query(text, namespace, top_k):
+    threshold = 0.5
+    index = initialize_pincone()
+
+    # Step 1: Chunk text based on size
+    data_chunks = create_chunks(text)
+    if not data_chunks:
+        raise ValueError("No chunks returned from the input text. Check 'create_chunks()' logic.")
+    data = data_chunks[0]
+
+    # Step 2: Get vector
+    vector = get_embedding(client=initialize_openai_client(), text=data)
+
+    # Step 3: Query Pinecone
+    answer = index.query(
+        vector=vector,
+        top_k=top_k,
+        include_metadata=True,
+        namespace=namespace
+    )
+
+    result = []
+    matches = answer.get("matches", [])
+    if not matches:
+        return result
+
+    for match in matches:
+        score = match.get("score", 0)
+        if score < threshold:
+            continue
+
+        metadata = match.get("metadata", {})
+        if namespace == 'openai-ref':
+            id = match.get("id")
+            content_row = OPENAI_DF[OPENAI_DF['id'] == id]
+            if content_row.empty:
+                continue
+            content = content_row['text'].values[0]
+            result.append({"content": content, "metadata": metadata})
+
+        elif namespace == 'gfg':
+            url = metadata.get("url")
+            content_row = GFG_DF[GFG_DF['url'] == url]
+            if content_row.empty:
+                continue
+            content = content_row['text'].values[0]
+            result.append({"content": content, "metadata": metadata})
+
+        else:
+            content = metadata.get("text", "")
+            result.append({"content": content, "metadata": metadata})
+
+    return result
+
+def moded_query(text, mode, user_id, topic_id):
+    # Get both gfg and user specific 
+    context = []
+    i = 1
+    try:
+        if mode == "0":
+            # Default Mode
+            mini_rag_results = query(text, user_id, 2)
+            filtered_rag = [doc for doc in mini_rag_results if doc.get("metadata", {}).get("topic_id") == topic_id]
+            for doc in filtered_rag:
+                content = doc.get("content", "")
+                context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
+                i+=1
+            academic_rag_results = query(text, "gfg", 2)
+            for doc in academic_rag_results:
+                content = doc.get("content", "")
+                context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
+                i+=1
+        elif mode == "1":
+            # Dev mode
+            dev_rag_results = query(text, 'dev', 3)
+            for doc in dev_rag_results:
+                content = doc.get("content", "")
+                context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
+                i+=1
+            openai_rag_results = query(text, "openai-ref", 3)
+            for doc in openai_rag_results:
+                content = doc.get("content", "")
+                context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
+                i+=1
+        elif mode == "2":
+            # Master This
+            mega_rag_results = query(text, "gfg", 3)
+            for doc in mega_rag_results:
+                content = doc.get("content", "")
+                context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
+                i+=1
+        elif mode == "4":
+            #Last Minute
+            last_minute_rag_results = query(text, "gfg", 3)
+            for doc in last_minute_rag_results:
+                content = doc.get("content", "")
+                context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
+                i+=1
+    except Exception as e:
+        raise Exception(f"Error in querying data from pinecone: {str(e)}")
+    return context
+
+# 0: Default (Balanced)
+# 1: Dev mode
+# 2: Master This
+# 3: Go crazy
+# 4: Last minute
+# 5: chat with pdf/video
+
+def get_response(input,max_tokens=-1, temp=-1 ,model="gpt-4.1"):
+    client = initialize_openai_client()
+    req_data = {
+        "model": model,
+        "input": input
+    }
+    if temp != -1:
+        req_data["temperature"] = temp
+    if max_tokens != -1:
+        req_data["max_output_tokens"] = max_tokens
+    try:
+        response = client.responses.create(**req_data)
+    except Exception as e:
+        raise Exception(f"Error in getting response from OpenAI: {str(e)}")
+    return response
+
+def summarize(client, text):
+    summary = client.responses.create(
+        model="gpt-4o-mini",
+        input=[
+            {
+                "role": "developer",
+                "content": "You are an Text Summarizer, I will give you a conversation between an llm and a user, you need to summarize the conversation such that the summary can be used as a prompt for the llm. You must do it in a chat format so that the summary reflects the doubts of the user and solutions provided by the llm."
+            },
+            {
+                "role": "user",
+                "content": text
+            },
+        ],
+        max_output_tokens=5000,
+        temperature=0.5,   
+    )
+    return summary
+
+def get_pdf_text(pdf_url):
+    try:
+        response = requests.get(pdf_url, timeout=10)
+        if response.status_code != 200: raise Exception(f"Failed to download PDF. Status code: {response.status_code}")
+    except requests.RequestException as e:
+        raise Exception(f"Failed to download PDF, Error: {str(e)}")
+    
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(response.content)
+            tmp_pdf_path = tmp_file.name
+
+        reader = PdfReader(tmp_pdf_path)
+        text = ""
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted
+    except Exception as e:
+        raise Exception(f"Failed to Extract PDF, Error: {str(e)}")
+    finally:
+        if os.path.exists(tmp_pdf_path):
+            os.remove(tmp_pdf_path)
+
+    return text
