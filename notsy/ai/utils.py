@@ -70,7 +70,7 @@ def upsert_text(text, metadata, namespace):
     for i, text in enumerate(chunks):
         try:
             vector = {
-                'id': f'vec-{metadata['created_at']}-{metadata['url']}-i',
+                'id': f"vec-{metadata['created_at']}-{metadata['url']}-i",
                 'values': get_embedding(client=client,text=text),
                 'metadata': metadata
             }

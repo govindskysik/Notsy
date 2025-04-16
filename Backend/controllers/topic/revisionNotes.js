@@ -1,4 +1,4 @@
-const topicModels = require('../models/topic/topicIndex');
+const topicModels = require('../../models/topic/topicIndex');
 const { StatusCodes } = require('http-status-codes');
 const { NotFoundError ,CustomAPIError} = require('../../errors/index');
 const axios = require('axios');
