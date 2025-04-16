@@ -226,7 +226,7 @@ def noteGenerator(context, model="gpt-4.1"):
                             "type": "array",
                             "items": { "type": "string", "description": "Common confusions/pitfalls students fall into, Fill it only if you something important otherwise leave it empty" }
                         },
-                        "memory_tip": { "type": "string" , "description": "A memory tip to remember the topic, Fill it only if you some good tip otherwise leave it empty" }
+                        "memory_tips": { "type": "string" , "description": "Memory tips to remember the topic, Fill it only if you some good tip otherwise leave it empty" }
                     },
                     "required": ["title", "introduction", "core_concepts", "example_or_use_case", "common_confusions", "memory_tip"],
                     "additionalProperties": False
@@ -269,7 +269,7 @@ def flashcardGenerator(context, model="gpt-4.1"):
                                     "color": {
                                         "type": "string",
                                         "enum": ["red", "yellow", "green"],
-                                        "description": "Importance level: red = most critical, yellow = important, green = regular"
+                                        "description": "Importance level: red = critical, yellow = important, green = regular"
                                     }
                                 },
                                 "required": ["concept", "explanation", "color"],
