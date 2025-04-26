@@ -61,8 +61,8 @@ const ResourceViewerPage = () => {
   }
 
   return (
-    <div className="h-screen bg-gray-50">
-      <div className="container mx-auto px-6 py-8 h-full">
+    <div className="h-screen w-screen overflow-hidden bg-primary/20">
+      <div className="h-full">
         <VideoResourceViewer resource={resource} />
       </div>
     </div>

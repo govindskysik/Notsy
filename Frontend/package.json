@@ -26,6 +26,7 @@
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
+    "react-pdf": "^9.2.1",
     "react-router-dom": "^7.4.1",
     "sigma": "^3.0.1",
     "tailwind-scrollbar-hide": "^2.0.0"
