@@ -105,13 +105,14 @@ const TopicMainContent = ({ topic, resources, loading, onResourcesUpdate }) => {
     }
   };
 
-  const handlePDFSubmit = async (files) => {
-    const loadingToast = toast.loading('Uploading PDFs...');
+  const handlePDFSubmit = async (response) => { // Change parameter name to response
+    const loadingToast = toast.loading('Processing PDFs...');
     
     try {
-      const response = await uploadPDFs(files, topicId);
+      if (!response?.data?._id) {
+        throw new Error('Invalid response from server');
+      }
       
-      // Update success toast
       toast.success('PDFs uploaded successfully', { id: loadingToast });
       
       // Update resources list
@@ -125,10 +126,11 @@ const TopicMainContent = ({ topic, resources, loading, onResourcesUpdate }) => {
       }, 1000);
       
     } catch (error) {
-      console.error('Error uploading PDFs:', error);
-      toast.error(error.response?.data?.msg || 'Failed to upload PDFs', { 
-        id: loadingToast 
-      });
+      console.error('Error processing PDFs:', error);
+      toast.error(
+        error.message || 'Failed to process PDFs', 
+        { id: loadingToast }
+      );
     }
   };
 

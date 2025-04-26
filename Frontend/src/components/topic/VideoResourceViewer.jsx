@@ -34,6 +34,9 @@ const VideoResourceViewer = ({ resource }) => {
 
   const getVideoIdFromUrl = (url) => {
     if (!url) return null;
+    // Skip URL parsing for PDF files
+    if (resource.type === "pdf") return null;
+    
     try {
       const videoUrl = new URL(url);
       const videoId = videoUrl.searchParams.get("v");
@@ -44,9 +47,13 @@ const VideoResourceViewer = ({ resource }) => {
     }
   };
 
-  const currentVideoId = getVideoIdFromUrl(videos[selectedVideoIndex]);
+  // Only check for video ID if it's a video resource
+  const currentVideoId = resource.type === "video" 
+    ? getVideoIdFromUrl(videos[selectedVideoIndex])
+    : null;
 
-  if (!currentVideoId) {
+  // Update validation check
+  if (resource.type === "video" && !currentVideoId) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Invalid video source</p>

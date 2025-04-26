@@ -125,29 +125,23 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
       return;
     }
 
-    // Validate file sizes
-    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    if (totalSize > MAX_FILE_SIZE * MAX_FILES) {
-      toast.error(`Total file size must be under ${MAX_FILES * 10}MB`);
-      return;
-    }
+    const filesArray = Array.from(files);
 
     try {
       setSubmittingPDFs(true);
-      const response = await uploadPDFs(files, topicId);
+      // Get response from uploadPDFs service
+      const response = await uploadPDFs(filesArray, topicId);
       
       setFiles([]); // Clear files after successful upload
-      toast.success(`Successfully uploaded ${files.length} PDFs`);
+      toast.success(`Successfully uploaded ${filesArray.length} PDFs`);
       
+      // Pass the response to parent callback
       if (onPDFSubmit) {
-        onPDFSubmit(response);
+        onPDFSubmit(response); // Pass the response, not files
       }
     } catch (error) {
       console.error("PDF upload failed:", error);
-      const errorMsg = error.response?.data?.msg || 
-                      error.message || 
-                      "Failed to upload PDFs. Please try again.";
-      toast.error(errorMsg);
+      toast.error(error.response?.data?.msg || error.message || "Failed to upload PDFs");
     } finally {
       setSubmittingPDFs(false);
     }
