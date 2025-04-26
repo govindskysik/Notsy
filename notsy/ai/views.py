@@ -70,14 +70,16 @@ class augmentedRespond(APIView):
             "2": "",
             "3": "Help the user understand concepts and explore topics",
             "4": "You are a teacher. Help user learn and prepare the concepts for a last minute exam.",
-            "5": "You are a teacher. Help the user understand the the content concepts clearly using the given context."
+            "5": "You are a teacher. Help the user understand the concepts clearly using the given context."
         }
+
         tempratures = {"1": 0.5, "2": 0.5, "3": 1.4}
         max_output_tokens = {"4": 5000}
         instruction = {
             "role": "developer",
             "content": instructions.get(mode_id, instructions["0"])
         }
+
         context = [instruction]
 
         # Append truncated summary
@@ -97,6 +99,22 @@ class augmentedRespond(APIView):
             context += rag_results
         except Exception as e:
             print(f"RAG retrieval failed: {str(e)}")
+        
+        if mode_id == "5":
+            video_content = request.data.get('video',[])
+            pdf_content = []
+            if 'pdf' in request.FILES:
+                pdf_files = request.FILES.getlist('pdf')
+                for pdf_file in pdf_files:
+                    try:
+                        pdf_text = utils.get_pdf_text(pdf_file)
+                        pdf_content.append(pdf_text)
+                    except Exception as e:
+                        return Response({"error": f'Unable to process uploaded PDF: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            for i,vid_txt in enumerate(video_content):
+                context.append({"role": "user", "content": f"[Video Transcript #{i}] {vid_txt}"})
+            for i, pdf_txt in enumerate(pdf_content):
+                context.append({"role": "user", "content": f"[PDF #{i}] {pdf_txt}"})
 
         # Add user query to the end
         context.append({"role": "user", "content": user_query})
@@ -111,7 +129,8 @@ class augmentedRespond(APIView):
 
         return Response({
             "message": response.output_text,
-            "metadata": metadata  # First matched metadata; optional to return more
+            "metadata": metadata,  # First matched metadata; optional to return more
+            "modeId": mode_id
         }, status=status.HTTP_200_OK)
 
 class makeNotes(APIView):
@@ -217,10 +236,10 @@ class makeQuizCards(APIView):
         context.append({"role": "user", "content": "Make Quiz from the above conversation as well as the retrieved content. make meaningful quiz that will help the student practice the topic. It should be prograssively harder. Do not back if necessary, make sure the last part of the quiz is master level."})
 
         try:
-            notes = utils.flashcardGenerator(context=context)
+            quiz = utils.quizGenerator(context=context)
         except Exception as e:
             return Response({"error": f'Unable to generate Notes, Error {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response({"message": notes}, status=status.HTTP_200_OK)
+        return Response({"message": quiz}, status=status.HTTP_200_OK)
 
 class miniRag(APIView):
     def post(self, request):
