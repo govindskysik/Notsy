@@ -5,7 +5,7 @@ const topicModel=require('../../models/topic/topicIndex')
 const Graph=require('../../models/notebook/graph')
 
 const createTopic=async(req,res)=>{
-  // console.log('hi')
+  console.log('hi')
     const userId=req.user.userId;
     const {folderId,topic}=req.body;
     try {
@@ -72,15 +72,18 @@ const deleteTopic = async (req, res) => {
     const folderId=req.body.folderId;
   
     try {
+      console.log('before 1')
       // 1. Verify that the topic exists and belongs to the user
       const topicToDelete = await topicModel.Topic.findOne({ _id: topicId, userId });
       if (!topicToDelete) {
         throw new NotFoundError('Topic not found');
       }
   
+      console.log('before 2')
       // 2. Delete the topic itself
       await topicToDelete.deleteOne();
   
+      console.log('before 3')
       // 3. Cascade deletion:
       await Promise.all([
         // Delete all Resources related to this topic
@@ -90,22 +93,22 @@ const deleteTopic = async (req, res) => {
         // Delete all Flashcards related to this topic
         topicModel.Flashcard.deleteMany({ topicId })
       ]);
-  
+console.log('before 4')
       // 4. Update the Graph collection to remove nodes and edges related to this topic
-      await Graph.updateMany(
-        { userId },
-        {
-          $pull: {
-            nodes: { nodeId: topicId },
-            edges: {
-              $or: [
-                { source: topicId },
-                { target: topicId }
-              ]
-            }
-          }
-        }
-      );
+      // await Graph.updateMany(
+      //   { userId },
+      //   {
+      //     $pull: {
+      //       nodes: { nodeId: topicId },
+      //       edges: {
+      //         $or: [
+      //           { source: topicId },
+      //           { target: topicId }
+      //         ]
+      //       }
+      //     }
+      //   }
+      // );
       const topics=await topicModel.Topic.find({userId,folderId});
 
       return res.status(StatusCodes.OK).json({ msg: 'Topic and all related content deleted successfully',topics });

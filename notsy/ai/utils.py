@@ -64,22 +64,26 @@ def upsert_text(text, metadata, namespace):
     client = initialize_openai_client()
     index = initialize_pincone()
 
-    if 'topic_id' not in metadata: raise("topic_id not found in metadata")
-    if 'user_id' not in metadata: raise("user_id not found in metadata")
+    if 'topic_id' not in metadata: 
+        raise ValueError("topic_id not found in metadata")
+    if 'user_id' not in metadata: 
+        raise ValueError("user_id not found in metadata")
 
     for i, text in enumerate(chunks):
         try:
+            # Generate a unique ID using UUID
+            unique_id = str(uuid.uuid4())
             vector = {
-                'id': f"vec-{metadata['created_at']}-{metadata['url']}-i",
-                'values': get_embedding(client=client,text=text),
+                'id': f"vec-{metadata['topic_id']}-{metadata['url']}-{unique_id}",
+                'values': get_embedding(client=client, text=text),
                 'metadata': metadata
             }
-            index.upsert(vectors = [vector], namespace=namespace)
+            index.upsert(vectors=[vector], namespace=namespace)
         except Exception as e:
-            raise Exception(f"Error in upserting data to pinecone: {str(e)}")
+            raise Exception(f"Error in upserting data to Pinecone: {str(e)}")
 
 def query(text, namespace, top_k):
-    threshold = 0.5
+    threshold = 0.0
     index = initialize_pincone()
 
     # Step 1: Chunk text based on size
@@ -231,7 +235,7 @@ def noteGenerator(context, model="gpt-4.1"):
                         },
                         "memory_tips": { "type": "string" , "description": "Memory tips to remember the topic, Fill it only if you some good tip otherwise leave it empty" }
                     },
-                    "required": ["title", "introduction", "core_concepts", "example_or_use_case", "common_confusions", "memory_tip"],
+                    "required": ["title", "introduction", "core_concepts", "example_or_use_case", "common_confusions", "memory_tips"],
                     "additionalProperties": False
                 },
                 "strict": True

@@ -66,7 +66,7 @@ class augmentedRespond(APIView):
         # Initialize context with instruction
         instructions = {
             "0": "",
-            "1": "Be very faithful to any documentation provided in the context in any.",
+            "1": "Be very faithful to any documentation provided in the context if any.",
             "2": "",
             "3": "Help the user understand concepts and explore topics",
             "4": "You are a teacher. Help user learn and prepare the concepts for a last minute exam.",
@@ -229,10 +229,10 @@ class miniRag(APIView):
         content = request.data.get('content')
         topicId = request.data.get('topicId')
         userId = request.data.get('userId')
-        createdAt = request.data.get('createdAt')
+        # createdAt = request.data.get('createdAt')
 
-        if data_type is None or topicId is None or createdAt is None:
-            return Response({"error": "Missing required fields: type, topicId or createdAt"}, status=status.HTTP_400_BAD_REQUEST)
+        if data_type is None or topicId is None :
+            return Response({"error": "Missing required fields: type, topicIdt"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             if data_type == 'pdf':
@@ -249,10 +249,9 @@ class miniRag(APIView):
                             metadata={
                                 "text": pdf_text[:500],
                                 "filename": pdf_file.name,
+                                "url": pdf_file.name,
                                 "topic_id": topicId,
-                                "user_id": userId,
-                                "created_at": createdAt
-                            }
+                                "user_id": userId                            }
                         )
                     except Exception as e:
                         return Response({"error": f'Unable to Upsert uploaded PDF: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -272,8 +271,7 @@ class miniRag(APIView):
                                 "text": video_text,
                                 "url": source[i],
                                 "topic_id": topicId,
-                                "user_id": userId,
-                                "created_at": createdAt
+                                "user_id": userId
                             }
                         )
                     except Exception as e:

@@ -1,6 +1,6 @@
 const topicModels = require('../../models/topic/topicIndex');
 const { StatusCodes } = require('http-status-codes');
-const { NotFoundError ,CustomAPIError} = require('../../errors/index');
+const { NotFoundError, CustomAPIError } = require('../../errors/index');
 const axios = require('axios');
 
 const createRevisionNotes = async (req, res) => {
@@ -19,20 +19,36 @@ const createRevisionNotes = async (req, res) => {
             throw new NotFoundError('No chat history found for this topic and user.');
         }
 
+        let messages = [];
+        let summary = [];
+        for (const chat of chats) {
+            messages = [...messages, ...chat.messages];
+            summary = [...summary, ...chat.summary];
+        }
+
         // Call the Python API to generate revision notes from the chats data
-        const apiResponse = await axios.post('http://127.0.0.1:8000/revisionNotes', 
-            { chats },
-            { timeout: 60000 }
+        const apiResponse = await axios.post('http://127.0.0.1:8000/notes/', 
+            { 
+                topicId,
+                userId,
+                messages,
+                summary
+            },
+            { timeout: 600000 }
         );
 
-        // Assume the API returns revision notes data in the response
-        const revisionNotesData = apiResponse.data;
+        const responseData = apiResponse.data.message;
 
         // Save the returned revision notes in your RevisionNotes model
         const revisionNotes = await topicModels.RevisionNotes.create({
             userId,
             topicId,
-            revisionNotes: revisionNotesData.revisionNotes // adjust field name as per your model
+            title: responseData.title,
+            introduction: responseData.introduction,
+            core_concepts: responseData.core_concepts,
+            example_or_use_case: responseData.example_or_use_case,
+            common_confusions: responseData.common_confusions,
+            memory_tips: responseData.memory_tips
         });
 
         return res.status(StatusCodes.CREATED).json({
@@ -40,13 +56,13 @@ const createRevisionNotes = async (req, res) => {
             revisionNotes
         });
     } catch (error) {
-        console.error('Error creating revision notes:', error);
-        if(error instanceof CustomAPIError){
-            return res.status(error.statusCode).json({msg:error.message});
-        }else{
+        if (error instanceof CustomAPIError) {
+            return res.status(error.statusCode).json({ msg: error.message });
+        } else {
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 msg: 'Error creating notes',
-                error: error.message});
+                error: error.message
+            });
         }
     }
 };

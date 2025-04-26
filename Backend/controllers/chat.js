@@ -89,6 +89,7 @@ const topicModels = require('../models/topic/topicIndex');
 
 const chat = async (req, res) => {
     try {
+        // console.log('Chat Request Body:', req.body);
         const { query, topicId, resourceId, chatId, parentId } = req.body;
         const userId = req.user.userId;
 
@@ -114,7 +115,7 @@ const chat = async (req, res) => {
                 resourceId,
                 userId,
                 parentChatId: parentId,
-                messages: [{ role: 'user', content: query }],
+                messages: [],
                 summary: []
             });
             chatHistory = parentChat.messages; // Use parent history for initial context
@@ -144,14 +145,14 @@ const chat = async (req, res) => {
                 topicId,
                 resourceId,
                 userId,
-                messages: [{ role: 'user', content: query }],
+                messages: [],
                 summary: []
             });
             chatHistory = chatDoc.messages;
             summary = [];
             referenceChats = [chatDoc._id];
         }
-
+        // console.log('Chat History:', chatHistory);
         // Call Python API with the appropriate context
         const apiResponse = await axios.post('http://127.0.0.1:8000/respond/', {
             user_query: query,
@@ -161,13 +162,14 @@ const chat = async (req, res) => {
             resourceId,
             userId
         }, { timeout: 60000 });
-
+    console.log('Python API Response:', apiResponse.data);
         const assistantResponse = apiResponse.data?.message;
         if (!assistantResponse?.trim()) {
             throw new Error('Invalid response format from Python API');
         }
 
         // Add assistant's message to the chat
+        chatDoc.messages.push({ role: 'user', content: query.trim() });
         chatDoc.messages.push({ role: 'assistant', content: assistantResponse.trim() });
         chatDoc.summary = apiResponse.data.summary || chatDoc.summary;
         await chatDoc.save();
@@ -179,7 +181,7 @@ const chat = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Chat Error:', error);
+        // console.error('Chat Error:', error);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             message: 'Chat processing failed',
             error: error.message,

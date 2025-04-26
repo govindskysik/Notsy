@@ -110,7 +110,7 @@ const uploadPdfs = async (req, res) => {
         const staticPaths = [];
         // Array for absolute paths to use when reading files from disk
         const absolutePaths = [];
-
+// console.log('hi',pdfFiles);
         for (const pdf of pdfFiles) {
             // Static path used for serving (e.g. via /uploads)
             const staticPath = `/uploads/pdf/${pdf.filename}`;
@@ -145,11 +145,13 @@ const uploadPdfs = async (req, res) => {
 
         return res.status(StatusCodes.CREATED).json({
             message: 'PDFs uploaded and processed successfully',
+            newResource,
             apiResponse: {
                 status: apiResponse.status,
                 data: apiResponse.data,
                 headers: apiResponse.headers
             }
+            
         });
     } catch (error) {
         console.error('Error in uploadPdfs:', error);
