@@ -81,6 +81,7 @@ const VideoResourceViewer = ({ resource }) => {
         setLoading(false);
       }
     };
+   
 
     loadChatHistory();
   }, [resource?._id]);
@@ -122,6 +123,7 @@ const VideoResourceViewer = ({ resource }) => {
       setLoading(false);
     }
   };
+    
 
   const renderChatModes = () => {
     if (!CHAT_MODES || Object.keys(CHAT_MODES).length === 0) {

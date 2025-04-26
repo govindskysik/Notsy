@@ -110,7 +110,6 @@ const uploadPdfs = async (req, res) => {
         const staticPaths = [];
         // Array for absolute paths to use when reading files from disk
         const absolutePaths = [];
-// console.log('hi',pdfFiles);
         for (const pdf of pdfFiles) {
             // Static path used for serving (e.g. via /uploads)
             const staticPath = `/uploads/pdf/${pdf.filename}`;
@@ -130,14 +129,14 @@ const uploadPdfs = async (req, res) => {
         formData.append('topicId', topicId);
         formData.append('userId', userId);
         formData.append('type', 'pdf');
-        // console.log('inside uploadpdf:---',formData);
+
         const apiResponse = await axios.post('http://127.0.0.1:8000/upload/', formData, {
             headers: formData.getHeaders()
         });
 
         const newResource = await topicModels.Resource.create({
             type: 'pdf',
-            source: staticPaths, // save the static URLs in the DB
+            source: staticPaths, 
             content: [],
             topicId,
             userId

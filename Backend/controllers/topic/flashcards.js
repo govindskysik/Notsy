@@ -3,6 +3,38 @@ const { StatusCodes } = require('http-status-codes');
 const { NotFoundError, CustomAPIError } = require('../../errors/index');
 const axios = require('axios');
 
+const getFlashcards = async (req, res) => {
+    try {
+        const { topicId } = req.body;
+        const userId = req.user.userId;
+
+        // Retrieve flashcards for this topic and user
+        const flashcards = await topicModels.Flashcard.findOne({ 
+            topicId, 
+            userId 
+        });
+
+        if (!flashcards) {
+            throw new NotFoundError('No flashcards found for this topic and user.');
+        }
+
+        return res.status(StatusCodes.OK).json({
+            message: 'Flashcards retrieved successfully',
+            flashcards
+        });
+    } catch (error) {
+        console.error('Error retrieving flashcards:', error);
+        if (error instanceof CustomAPIError) {
+            return res.status(error.statusCode).json({ msg: error.message });
+        } else {
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                msg: 'Error retrieving flashcards',
+                error: error.message
+            });
+        }
+    }
+}
+
 const createFlashcards = async (req, res) => {
     try {
         const { topicId } = req.body;
@@ -34,17 +66,37 @@ const createFlashcards = async (req, res) => {
 
         const responseData = apiResponse.data.message;
 
+        const flashcards=await topicModels.Flashcard.findOneAndUpdate(
+            {topicId,userId},
+            {
+                topicId,
+                userId,
+                topic:responseData.topic,
+                flashcards:responseData.flashcards.map(card=>({
+                    concept:card.concept,
+                    explanation:card.explanation,
+                    color:card.color           
+                }))
+
+            },{
+                new:true,
+                upsert:true,
+                
+            }
+
+        )
+
         // Save the topic and flashcards in the database
-        const flashcards = await topicModels.Flashcard.create({
-            userId,
-            topicId,
-            topic: responseData.topic,
-            flashcards: responseData.flashcards.map(card => ({
-                concept: card.concept,
-                explanation: card.explanation,
-                color: card.color
-            }))
-        });
+        // const flashcards = await topicModels.Flashcard.create({
+        //     userId,
+        //     topicId,
+        //     topic: responseData.topic,
+        //     flashcards: responseData.flashcards.map(card => ({
+        //         concept: card.concept,
+        //         explanation: card.explanation,
+        //         color: card.color
+        //     }))
+        // });
 
         return res.status(StatusCodes.CREATED).json({
             message: 'Flashcards created successfully',
@@ -64,5 +116,6 @@ const createFlashcards = async (req, res) => {
 };
 
 module.exports = {
-    createFlashcards
+    createFlashcards,
+    getFlashcards
 };

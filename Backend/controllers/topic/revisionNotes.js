@@ -3,6 +3,34 @@ const { StatusCodes } = require('http-status-codes');
 const { NotFoundError, CustomAPIError } = require('../../errors/index');
 const axios = require('axios');
 
+const getRevisionNotes=async(req,res)=>{
+    try {
+        const {topicId}=req.body;
+        const userId=req.user.userId;
+
+        const revisionNotes=await topicModels.RevisionNotes.findOne({
+            topicId,userId
+        });
+        if(!revisionNotes){
+            throw new NotFoundError('No revision notes found for this topic and user.');    
+        }
+        return res.status(StatusCodes.OK).json({
+            message:'Revision notes retrieved successfully',
+            revisionNotes   
+        })
+        
+    } catch (error) {
+        if(error instanceof CustomAPIError){
+            return res.status(error.statusCode).json({msg:error.message});  
+    }else{
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                msg:'Error retrieving revision notes',
+                error:error.message
+            });
+        }   
+    }
+}
+
 const createRevisionNotes = async (req, res) => {
     try {
         const { topicId } = req.body;
@@ -68,5 +96,6 @@ const createRevisionNotes = async (req, res) => {
 };
 
 module.exports = {
-    createRevisionNotes
+    createRevisionNotes,
+    getRevisionNotes
 };

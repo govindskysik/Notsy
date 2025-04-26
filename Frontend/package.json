@@ -12,6 +12,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@react-pdf/renderer": "^4.3.0",
     "axios": "^1.8.4",
     "browser-image-compression": "^2.0.2",
     "daisyui": "^5.0.12",
