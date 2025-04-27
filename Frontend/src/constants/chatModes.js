@@ -23,10 +23,5 @@ export const CHAT_MODES = {
     id: 'LAST_MINUTE',
     icon: '🟠',
     label: 'Last Minute',
-  },
-  RESOURCE_CHAT: {
-    id: 'RESOURCE_CHAT',
-    icon: '🟢',
-    label: 'Chat with Resource',
   }
 };

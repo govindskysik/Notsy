@@ -5,8 +5,12 @@ const axios = require('axios');
 
 const getFlashcards = async (req, res) => {
     try {
-        const { topicId } = req.body;
+        const topicId = req.query.topicId; // Get from query instead of body
         const userId = req.user.userId;
+
+        if (!topicId) {
+            throw new CustomAPIError('Topic ID is required', 400);
+        }
 
         // Retrieve flashcards for this topic and user
         const flashcards = await topicModels.Flashcard.findOne({ 
@@ -15,7 +19,9 @@ const getFlashcards = async (req, res) => {
         });
 
         if (!flashcards) {
-            throw new NotFoundError('No flashcards found for this topic and user.');
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: 'No flashcards found for this topic and user.'
+            });
         }
 
         return res.status(StatusCodes.OK).json({
@@ -26,12 +32,11 @@ const getFlashcards = async (req, res) => {
         console.error('Error retrieving flashcards:', error);
         if (error instanceof CustomAPIError) {
             return res.status(error.statusCode).json({ msg: error.message });
-        } else {
-            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                msg: 'Error retrieving flashcards',
-                error: error.message
-            });
         }
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            msg: 'Error retrieving flashcards',
+            error: error.message
+        });
     }
 }
 
