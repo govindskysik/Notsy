@@ -53,7 +53,7 @@ class augmentedRespond(APIView):
         topic_id = request.data.get('topicId')
         user_id = request.data.get('userId')
         mode_id = request.data.get('modeId',"0")
-
+        print(mode_id)
         if messages is None or summary is None:
             return Response({"error": "No messages or summary provided."}, status=status.HTTP_400_BAD_REQUEST)
         if len(messages) % 2 != 0:

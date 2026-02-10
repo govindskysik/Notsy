@@ -28,7 +28,8 @@ const Dashboard = () => {
       console.error('Error details:', {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
+        platform: navigator.platform,
       });
       
       // Check if it's a "no folders found" error

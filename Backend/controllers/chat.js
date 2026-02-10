@@ -6,91 +6,11 @@ const topicModels = require('../models/topic/topicIndex');
 
 
 
-// const chat = async (req, res) => {
-//     try {
-//         const { query, topicId, resourceId } = req.body;
-
-//         if (!query || !topicId || !resourceId) {
-//             throw new BadRequestError('Please provide a query, topicId, and resourceId');
-//         }
-
-//         const userId = req.user.userId;
-
-//         // 1. Get existing chat history for the resource
-//         const existingChat = await Chat.findOne({ resourceId }).sort({ createdAt: -1 });
-
-//         let chatHistory = [];
-//         let parentChatId = null;
-
-//         if (existingChat) {
-//             chatHistory = existingChat.messages;
-//             parentChatId = existingChat._id;
-//         }
-
-//         // 2. Call Python API
-//         const apiResponse = await axios.post('http://127.0.0.1:8000/respond/', {
-//             user_query: query,
-//             messages: chatHistory,
-//             topicId,
-//             summary: existingChat?.summary || [],
-//             resourceId,
-//             userId: userId
-//         }, { timeout: 60000 });
-
-//         console.log('Python API Response:', apiResponse.data);
-
-//         const assistantResponse = apiResponse.data?.message;
-//         if (!assistantResponse?.trim()) {
-//             throw new Error('Invalid response format from Python API');
-//         }
-
-//         // 3. Create new message objects
-//         const newMessages = [
-//             { role: 'user', content: query.trim() },
-//             { role: 'assistant', content: assistantResponse.trim() }
-//         ];
-
-//         // 4. If an existing chat is found, update it; otherwise, create a new chat document
-//         if (existingChat) {
-//             // Append new messages to the existing chat's messages array
-//             existingChat.messages = [...existingChat.messages, ...newMessages];
-//             // Optionally update the summary if needed
-//             existingChat.summary = apiResponse.data.summary || existingChat.summary;
-//             await existingChat.save();
-
-//             return res.status(StatusCodes.OK).json({
-//                 message: 'Chat processed successfully',
-//                 chat: existingChat
-//             });
-//         } else {
-//             const newChat = await Chat.create({
-//                 topicId,
-//                 resourceId,
-//                 userId,
-//                 messages: newMessages,
-//                 summary: apiResponse.data.summary || []
-//             });
-
-//             return res.status(StatusCodes.OK).json({
-//                 message: 'Chat processed successfully',
-//                 chat: newChat
-//             });
-//         }
-
-//     } catch (error) {
-//         console.error('Chat Error:', error);
-//         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-//             message: 'Chat processing failed',
-//             error: error.message,
-//             ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-//         });
-//     }
-// };
 
 const chat = async (req, res) => {
     try {
         // console.log('Chat Request Body:', req.body);
-        const { query, topicId, resourceId, chatId, parentId } = req.body;
+        const { query, topicId, resourceId, chatId, parentId ,mode} = req.body;
         const userId = req.user.userId;
 
         if (!query || !topicId || !resourceId) {
@@ -152,6 +72,7 @@ const chat = async (req, res) => {
             summary = [];
             referenceChats = [chatDoc._id];
         }
+        console.log(mode)
         // console.log('Chat History:', chatHistory);
         // Call Python API with the appropriate context
         const apiResponse = await axios.post('http://127.0.0.1:8000/respond/', {
@@ -160,9 +81,10 @@ const chat = async (req, res) => {
             topicId,
             summary,
             resourceId,
-            userId
+            userId,
+            modeId:mode
         }, { timeout: 60000 });
-    console.log('Python API Response:', apiResponse.data);
+    console.log('Python API Response:', apiResponse);
         const assistantResponse = apiResponse.data?.message;
         if (!assistantResponse?.trim()) {
             throw new Error('Invalid response format from Python API');
