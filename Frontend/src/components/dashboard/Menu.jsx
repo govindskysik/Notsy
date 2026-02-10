@@ -15,8 +15,7 @@ const Menu = ({ notebooks = [], topics = {}, loading, onAddNotebookClick }) => {
 
   const handleLogout = () => {
     logout();
-    toast.success("Logged out successfully");
-    navigate("/auth/login");
+    navigate("/"); // Changed from /auth/login to /
   };
 
   const handleNotebookClick = (e, notebookId) => {

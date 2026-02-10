@@ -11,42 +11,27 @@ const flashcardSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    sourceChats: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Chat'
-    }],
-    question: {
+    topic: {
         type: String,
-        required: [true, 'Please provide a question']
+        required: true
     },
-    answer: {
-        type: String,
-        required: [true, 'Please provide an answer']
-    },
-    tags: [{
-        type: String
-    }],
-    difficulty: {
-        type: String,
-        enum: ['easy', 'medium', 'hard']
-    }
-    // lastReviewed: {
-    //     type: Date
-    // },
-    // reviewStats: {
-    //     timesReviewed: {
-    //         type: Number,
-    //         default: 0
-    //     },
-    //     correctCount: {
-    //         type: Number,
-    //         default: 0
-    //     },
-    //     incorrectCount: {
-    //         type: Number,
-    //         default: 0
-    //     }
-    // }
+    flashcards: [
+        {
+            concept: {
+                type: String,
+                required: true
+            },
+            explanation: {
+                type: String,
+                required: true
+            },
+            color: {
+                type: String,
+                enum: ['red', 'yellow', 'green'],
+                required: true
+            }
+        }
+    ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Flashcard', flashcardSchema);

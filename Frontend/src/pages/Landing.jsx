@@ -88,7 +88,98 @@ const Landing = () => {
           </section>
 
           {/* Features Section */}
-          <section ref={featuresRef} className="mt-32 min-h-screen"></section>
+          <section ref={featuresRef} className="mt-32 min-h-screen">
+            <h3 className="text-4xl font-bold text-center">Key Features</h3>
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+              {/* AI Chat Feature */}
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                  <span className="text-2xl">🤖</span>
+                </div>
+                <h4 className="text-xl font-semibold mb-4">AI-Powered Chat</h4>
+                <p className="text-gray-600">
+                  Engage in intelligent conversations with our AI assistant to
+                  better understand your study materials and get instant help.
+                </p>
+              </div>
+
+              {/* Visual Graph Feature */}
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                  <span className="text-2xl">🔗</span>
+                </div>
+                <h4 className="text-xl font-semibold mb-4">
+                  Visual Knowledge Graph
+                </h4>
+                <p className="text-gray-600">
+                  Visualize connections between your notebooks, topics, and
+                  resources with our interactive knowledge graph system.
+                </p>
+              </div>
+
+              {/* Resource Management */}
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                  <span className="text-2xl">📚</span>
+                </div>
+                <h4 className="text-xl font-semibold mb-4">
+                  Resource Management
+                </h4>
+                <p className="text-gray-600">
+                  Organize your study materials with notebooks and topics.
+                  Upload videos and PDFs for easy access and reference.
+                </p>
+              </div>
+
+              {/* Smart Organization */}
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                  <span className="text-2xl">📋</span>
+                </div>
+                <h4 className="text-xl font-semibold mb-4">Smart Organization</h4>
+                <p className="text-gray-600">
+                  Create structured notebooks and topics to keep your learning
+                  materials organized and easily accessible.
+                </p>
+              </div>
+
+              {/* Interactive Learning */}
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <h4 className="text-xl font-semibold mb-4">
+                  Interactive Learning
+                </h4>
+                <p className="text-gray-600">
+                  Engage with your study materials through interactive features,
+                  including AI chat assistance and visual connections.
+                </p>
+              </div>
+
+              {/* Progress Tracking */}
+              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                  <span className="text-2xl">📊</span>
+                </div>
+                <h4 className="text-xl font-semibold mb-4">Progress Tracking</h4>
+                <p className="text-gray-600">
+                  Monitor your learning journey with detailed statistics,
+                  streaks, and usage analytics.
+                </p>
+              </div>
+            </div>
+
+            {/* Call to Action */}
+            <div className="mt-16 text-center">
+              <button
+                onClick={handleGetStarted}
+                className="bg-primary text-white px-8 py-4 rounded-xl text-xl font-medium hover:bg-primary-hover transition-all"
+              >
+                Start Learning Now
+              </button>
+            </div>
+          </section>
 
           {/* About Section */}
           <section ref={aboutRef} className="mt-32 min-h-screen">

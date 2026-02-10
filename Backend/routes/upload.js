@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 
 const upload=require('../config/multer');
-const {uploadUrls}=require('../controllers/topic/upload')
+const {uploadUrls,uploadPdfs}=require('../controllers/topic/upload')
 
 
-// router.post('/uploadPDF', upload.single("pdf"), uploadPDF);
 router.post('/uploadUrl', uploadUrls);
+router.post('/uploadPdf', upload('./uploads/pdf'), uploadPdfs);
 
 
 module.exports = router;

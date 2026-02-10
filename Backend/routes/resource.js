@@ -6,6 +6,6 @@ const folderController=require('../controllers/topic/resources');
 // router.post('/',upload('./uploads/coverImages'),folderController.createFolder);
 // router.get('/',folderController.getAllFolders);
 router.get('/:id',folderController.getResourceById);
-// router.delete('/:id',folderController.deleteFolder);
+router.delete('/:id',folderController.deleteResourceById);
 
 module.exports=router;

@@ -11,17 +11,30 @@ const revisionNotesSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    content: {
+    title: {
         type: String,
-        required: [true, 'Please provide content for the revision note']
+        required: true
     },
-    // sourceChats: [{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Chat'
-    // }],
-    // lastUpdated: {
-    //     type: Date
-    // }
+    introduction: {
+        type: String,
+        required: true
+    },
+    core_concepts: {
+        type: [String], // Array of strings for multiple concepts
+        required: true
+    },
+    example_or_use_case: {
+        type: String,
+        required: true
+    },
+    common_confusions: {
+        type: [String], // Array of strings for multiple confusions
+        required: true
+    },
+    memory_tips: {
+        type: String,
+        required: true
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('RevisionNotes', revisionNotesSchema);

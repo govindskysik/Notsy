@@ -11,6 +11,11 @@ const folderSchema=new mongoose.Schema({
         // required:true,
         unique:true
     },
+    path:{
+        type:String,
+        // required:true,
+        unique:true
+    },
     userId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'User',

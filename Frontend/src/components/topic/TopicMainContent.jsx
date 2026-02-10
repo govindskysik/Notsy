@@ -5,6 +5,7 @@ import { assets } from "../../assets/assets";
 import ResourceUploadSection from './ResourceUploadSection';
 import axios from "../../utils/axios";
 import { toast } from "react-hot-toast";
+import { uploadPDFs } from '../../services/resourceService';
 
 const ResourceCard = ({ resource, onClick }) => {
   const getVideoIdFromUrl = (url) => {
@@ -104,6 +105,35 @@ const TopicMainContent = ({ topic, resources, loading, onResourcesUpdate }) => {
     }
   };
 
+  const handlePDFSubmit = async (response) => { // Change parameter name to response
+    const loadingToast = toast.loading('Processing PDFs...');
+    
+    try {
+      if (!response?.data?._id) {
+        throw new Error('Invalid response from server');
+      }
+      
+      toast.success('PDFs uploaded successfully', { id: loadingToast });
+      
+      // Update resources list
+      if (onResourcesUpdate) {
+        await onResourcesUpdate();
+      }
+
+      // Navigate to resource viewer
+      setTimeout(() => {
+        navigate(`/dashboard/resource/${response.data._id}`);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error processing PDFs:', error);
+      toast.error(
+        error.message || 'Failed to process PDFs', 
+        { id: loadingToast }
+      );
+    }
+  };
+
   const handleResourceClick = (resourceId) => {
     navigate(`/dashboard/resource/${resourceId}`);
   };
@@ -115,7 +145,7 @@ const TopicMainContent = ({ topic, resources, loading, onResourcesUpdate }) => {
         {user ? (
           <ResourceUploadSection 
             onVideoSubmit={handleVideoSubmit}
-            onPDFSubmit={(files) => console.log('PDF upload coming soon')}
+            onPDFSubmit={handlePDFSubmit}
             topicId={topicId}
           />
         ) : (

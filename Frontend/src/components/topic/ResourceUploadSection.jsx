@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { XMarkIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-hot-toast";
+import { uploadPDFs } from '../../services/resourceService';
 
 const MAX_URLS = 5;
 const MAX_FILES = 5;
@@ -114,18 +115,33 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
   });
 
   const handlePDFSubmit = async () => {
+    if (!topicId) {
+      toast.error("Missing topic information");
+      return;
+    }
+
     if (files.length === 0) {
       toast.error("Please add at least one PDF");
       return;
     }
 
+    const filesArray = Array.from(files);
+
     try {
       setSubmittingPDFs(true);
-      await onPDFSubmit(files);
-      setFiles([]);
-      toast.success("PDFs submitted successfully");
+      // Get response from uploadPDFs service
+      const response = await uploadPDFs(filesArray, topicId);
+      
+      setFiles([]); // Clear files after successful upload
+      toast.success(`Successfully uploaded ${filesArray.length} PDFs`);
+      
+      // Pass the response to parent callback
+      if (onPDFSubmit) {
+        onPDFSubmit(response); // Pass the response, not files
+      }
     } catch (error) {
-      toast.error("Failed to submit PDFs");
+      console.error("PDF upload failed:", error);
+      toast.error(error.response?.data?.msg || error.message || "Failed to upload PDFs");
     } finally {
       setSubmittingPDFs(false);
     }
