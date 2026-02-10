@@ -50,14 +50,14 @@ Smart study workspace with notebooks, resources, flashcards, and AI-assisted cha
 
 ### High-Level Diagram
 ```mermaid
-flowchart LR
-  U[User] --> WC[Web Client (React)]
-  WC --> API[API Server (Express)]
-  API --> DB[(MongoDB)]
-  API --> AI[AI Service (Django)]
-  API --> OAI[OpenAI API]
-  AI --> API
-  API --> WC
+flowchart LR;
+   U["User"] --> WC["Web Client (React)"];
+   WC --> API["API Server (Express)"];
+   API --> DB[("MongoDB")];
+   API --> AI["AI Service (Django)"];
+   API --> OAI["OpenAI API"];
+   AI --> API;
+   API --> WC;
 ```
 
 ## Getting Started
