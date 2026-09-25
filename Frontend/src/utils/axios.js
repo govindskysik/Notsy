@@ -1,11 +1,11 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'http://localhost:3000/notsy', 
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true
+  withCredentials: true,
 });
 
 instance.interceptors.request.use(
