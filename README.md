@@ -109,6 +109,17 @@ Open the Vite address shown in the terminal (normally `http://localhost:5173`).
 - Never commit `.env` files or API keys.
 - For MongoDB Atlas, add your current IP address to the Atlas network access list. A connection error such as `ReplicaSetNoPrimary` or a TLS alert often means Atlas access, DNS, or network rules need checking.
 
+## Deploying to Vercel and Render
+
+The frontend must never use `localhost` after deployment: a visitor's browser treats `localhost` as its own device, not your Render API.
+
+1. Deploy `Backend/` to Render and confirm its public **HTTPS** URL responds.
+2. In the Vercel project, add `VITE_API_URL` with the complete API base URL, for example `https://your-api.onrender.com/notsy`.
+3. In the Render service, add `FRONTEND_URL=https://notsy-one.vercel.app`. Add more origins with commas if you use Vercel preview domains.
+4. Redeploy Render after changing its environment variables, then redeploy Vercel. Vite embeds `VITE_*` variables during the build.
+
+Use the provided [Frontend/.env.example](Frontend/.env.example) and [Backend/.env.example](Backend/.env.example) as safe configuration templates. Do not include a trailing slash in `VITE_API_URL`.
+
 ## Product flow
 
 1. Sign up and create a notebook.
