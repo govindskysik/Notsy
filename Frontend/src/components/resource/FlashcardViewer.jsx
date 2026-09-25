@@ -20,7 +20,7 @@ const FlashcardViewer = ({ flashcards, topicId, onFlashcardsUpdate }) => {
       }
     } catch (error) {
       console.error('Error creating flashcards:', error);
-      toast.error(error.response?.data?.msg || 'Failed to create flashcards');
+      toast.error(error.response?.data?.error || error.response?.data?.msg || 'Failed to create flashcards');
     } finally {
       setLoading(false);
     }

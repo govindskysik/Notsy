@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import TopicMenu from "../components/topic/TopicMenu";
+import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 import TopicMainContent from "../components/topic/TopicMainContent";
-import { assets } from "../assets/assets";
 import axios from "../utils/axios";
 import { toast } from "react-hot-toast";
+import { assets } from "../assets/assets";
+import { goTo } from "../utils/navigation";
 
 const TopicDashboard = () => {
   const { topicId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [topic, setTopic] = useState(null);
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
+  const handleBackToNotebook = () => {
+    const notebookId = topic?.folderId?._id || topic?.folderId;
+    goTo(notebookId ? `/dashboard/notebook/${notebookId}` : '/dashboard', { replace: true });
+  };
 
   useEffect(() => {
     const fetchTopicData = async () => {
@@ -37,33 +41,9 @@ const TopicDashboard = () => {
   }, [topicId, navigate]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
-      <div
-        className="w-full h-full bg-cover bg-center"
-        style={{ backgroundImage: `url(${assets.dashboardbg})` }}
-      >
-        <div className="flex h-full">
-          {/* Sidebar */}
-          <div className="w-64 backdrop-blur-sm">
-            <TopicMenu
-              topic={topic}
-              resources={resources}
-              loading={loading}
-            />
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 p-5">
-            <div className="backdrop-blur-sm bg-base-white p-7 h-full rounded-xl shadow-sm">
-              <TopicMainContent
-                topic={topic}
-                resources={resources}
-                loading={loading}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="dashboard-shell dashboard-product-shell topic-page">
+      <header className="dashboard-topbar"><button className="dashboard-topbar-brand" type="button" onClick={() => navigate('/dashboard')}><span className="dashboard-brand-mark"><img src={assets.logo} alt="" /></span><span>NOTSY</span></button><div className="dashboard-topbar-actions"><button type="button" className="dashboard-new-button" onClick={() => setIsResourceModalOpen(true)}><PlusIcon /> New resource</button><button type="button" className="dashboard-back-button" onClick={handleBackToNotebook}><ArrowLeftIcon /> Back</button></div></header>
+      <main className="topic-page-content"><TopicMainContent topic={topic} resources={resources} loading={loading} isResourceModalOpen={isResourceModalOpen} onCloseResourceModal={() => setIsResourceModalOpen(false)} onResourcesUpdate={async () => { const response = await axios.get(`/topic/${topicId}`); setResources(response.data.resources || []); }} /></main>
     </div>
   );
 };

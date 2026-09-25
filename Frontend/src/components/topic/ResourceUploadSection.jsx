@@ -22,7 +22,7 @@ const getYoutubeInfo = (url) => {
   }
 };
 
-const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
+const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId, mode = "all", onComplete }) => {
   const [urls, setUrls] = useState([]);
   const [currentUrl, setCurrentUrl] = useState("");
   const [files, setFiles] = useState([]);
@@ -79,6 +79,7 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
       await onVideoSubmit(urls);
       toast.success(`Successfully uploaded ${urls.length} videos`);
       setUrls([]);
+      onComplete?.();
     } catch (error) {
       console.error("Video submission failed:", error, error.response?.data);
       toast.error(error.response?.data?.msg || "Failed to submit videos");
@@ -137,8 +138,9 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
       
       // Pass the response to parent callback
       if (onPDFSubmit) {
-        onPDFSubmit(response); // Pass the response, not files
+        await onPDFSubmit(response); // Pass the response, not files
       }
+      onComplete?.();
     } catch (error) {
       console.error("PDF upload failed:", error);
       toast.error(error.response?.data?.msg || error.message || "Failed to upload PDFs");
@@ -148,11 +150,11 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-6 h-full">
+    <div className={`topic-upload-grid grid ${mode === "all" ? "grid-cols-2" : "grid-cols-1 is-single"} gap-6 h-full`}>
       {/* Videos Card */}
-      <div className="bg-white rounded-xl p-6 shadow-sm flex flex-col">
+      {mode !== "pdf" && <div className="topic-upload-panel rounded-xl p-6 flex flex-col">
         <h3 className="text-lg font-semibold mb-4">
-          Add YouTube Videos ({urls.length}/{MAX_URLS})
+          YouTube <span className="topic-upload-count">{urls.length}/{MAX_URLS} videos added</span>
         </h3>
         <div className="flex-1 space-y-4">
           <div className="flex gap-2">
@@ -161,7 +163,7 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
               value={currentUrl}
               onChange={(e) => setCurrentUrl(e.target.value)}
               placeholder="Paste YouTube URL here"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="topic-upload-input flex-1 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <button
               onClick={handleUrlAdd}
@@ -208,19 +210,19 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
           disabled={submittingVideos || urls.length === 0}
           className="mt-4 w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50"
         >
-          {submittingVideos ? "Submitting Videos..." : "Submit Videos"}
+          {submittingVideos ? "Adding videos..." : "Add videos"}
         </button>
-      </div>
+      </div>}
 
       {/* PDFs Card */}
-      <div className="bg-white rounded-xl p-6 shadow-sm flex flex-col">
+      {mode !== "video" && <div className="topic-upload-panel rounded-xl p-6 flex flex-col">
         <h3 className="text-lg font-semibold mb-4">
-          Upload PDFs ({files.length}/{MAX_FILES})
+          Documents <span className="topic-upload-count">{files.length}/{MAX_FILES} PDFs added</span>
         </h3>
         <div className="flex-1 space-y-4">
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
+            className={`topic-dropzone border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
               ${
                 isDragActive
                   ? "border-primary bg-primary/5"
@@ -267,9 +269,9 @@ const ResourceUploadSection = ({ onVideoSubmit, onPDFSubmit, topicId }) => {
           disabled={submittingPDFs || files.length === 0}
           className="mt-4 w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50"
         >
-          {submittingPDFs ? "Submitting PDFs..." : "Submit PDFs"}
+          {submittingPDFs ? "Uploading PDF..." : "Upload PDF"}
         </button>
-      </div>
+      </div>}
     </div>
   );
 };

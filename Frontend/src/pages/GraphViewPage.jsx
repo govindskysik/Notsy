@@ -1,33 +1,64 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import GraphViewer from '../components/graph/GraphViewer';
-import { IoArrowBack } from "react-icons/io5";
+import { ArrowRightOnRectangleIcon, PlusIcon } from '@heroicons/react/24/outline';
+import KnowledgeMap from '../components/graph/KnowledgeMap';
+import { assets } from '../assets/assets';
+import axios from '../utils/axios';
+import { useAuth } from '../context/AuthContext';
+import { goTo } from '../utils/navigation';
 
 const GraphViewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { notebooks, topics, resources } = location.state || {};
+  const { logout } = useAuth();
+  const routeState = location.state || {};
+  const [notebooks, setNotebooks] = useState(routeState.notebooks || []);
+  const [topics, setTopics] = useState(routeState.topics || []);
+  const [resources, setResources] = useState(routeState.resources || []);
+  const handleLogout = () => { logout(); goTo('/'); };
+
+  useEffect(() => {
+    if (routeState.notebooks?.length) return;
+
+    const loadExploreData = async () => {
+      try {
+        const folderResponse = await axios.get('/folder');
+        const nextNotebooks = folderResponse.data.folders || [];
+        const topicResponses = await Promise.all(nextNotebooks.map((notebook) => axios.get(`/folder/${notebook._id}`)));
+        const nextTopics = topicResponses.flatMap((response) => response.data.topics || []);
+        const resourceResponses = await Promise.all(nextTopics.map((topic) => axios.get(`/topic/${topic._id}`)));
+        const nextResources = resourceResponses.flatMap((response) => response.data.resources || []);
+        setNotebooks(nextNotebooks);
+        setTopics(nextTopics);
+        setResources(nextResources);
+      } catch (error) {
+        console.error('Failed to load Explore data:', error);
+      }
+    };
+
+    loadExploreData();
+  }, [routeState.notebooks]);
 
   return (
-    <div className="h-screen w-screen bg-gray-50">
-      <div className="p-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-4 flex items-center gap-2 text-primary hover:text-primary-hover"
-        >
-          <IoArrowBack className="w-5 h-5" />
-          Back to Dashboard
+    <div className="dashboard-shell dashboard-product-shell graph-view-page">
+      <header className="dashboard-topbar">
+        <button className="dashboard-topbar-brand" type="button" onClick={() => navigate('/dashboard')}>
+          <span className="dashboard-brand-mark"><img src={assets.logo} alt="" /></span>
+          <span>NOTSY</span>
         </button>
-      </div>
-      
-      <div className="h-[calc(100vh-5rem)]">
-        <GraphViewer
-          notebooks={notebooks}
-          topics={topics}
-          resources={resources}
-          isFullScreen={true}
-        />
-      </div>
+        <nav className="dashboard-topbar-nav" aria-label="Primary navigation">
+          <button type="button" onClick={() => navigate('/dashboard')}>Home</button>
+          <button type="button" onClick={() => navigate('/dashboard')}>Notebooks</button>
+          <button className="is-active" type="button">Map</button>
+        </nav>
+        <div className="dashboard-topbar-actions">
+          <button className="dashboard-new-button" type="button" onClick={() => navigate('/dashboard')}><PlusIcon /> New</button>
+          <button className="dashboard-logout-button" type="button" onClick={handleLogout}><ArrowRightOnRectangleIcon /> Logout</button>
+        </div>
+      </header>
+      <main className="graph-view-main">
+        <KnowledgeMap fullPage notebooks={notebooks || []} topics={topics || []} resources={resources || []} />
+      </main>
     </div>
   );
 };

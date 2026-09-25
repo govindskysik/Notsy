@@ -1,112 +1,122 @@
-# NOTSY
+# Notsy
 
-Smart study workspace with notebooks, resources, flashcards, and AI-assisted chat.
+Notsy is a connected study workspace for collecting material, understanding it, and seeing how it fits together. Create notebooks, organise topics, attach PDFs or videos, then use the built-in study tools to chat with a resource, generate notes, make flashcards, and explore your knowledge map.
 
-## Highlights
-- AI-assisted chat with context from your uploaded resources
-- Notebooks and topics to organize study content
-- Auto-generated flashcards and revision notes
-- PDF uploads and resource management
-- Graph-based topic exploration
+## What you can do
 
-## Tech Stack
+- Create notebooks and group related topics inside them.
+- Add PDF documents and YouTube videos as topic resources.
+- Open PDFs directly from the study workspace.
+- Ask questions about a resource in the study chat.
+- Generate revision notes and flashcards from your material.
+- Explore notebooks, topics, and resources in an interactive constellation map.
+- Move around the map with pan, zoom, selection, and cluster dragging.
 
-### Frontend
-- React (Vite)
-- Tailwind CSS + DaisyUI
-- React Router
-- Axios
-- Graphology + Sigma (graph visualizations)
+## Tech stack
 
-### Backend
-- Node.js (Express)
-- MongoDB (Mongoose)
-- Multer (file uploads)
-- OpenAI API client
-- Puppeteer (resource extraction)
+| Area | Tools |
+| --- | --- |
+| Client | React, Vite, React Router, Axios, Tailwind CSS, DaisyUI |
+| API | Node.js, Express, Mongoose, JWT, Multer |
+| Data | MongoDB |
+| Resource processing | Puppeteer, YouTube transcript tools, PDF libraries |
+| AI service | Django/DRF, LangChain, OpenAI-compatible APIs |
 
-### AI/ML Service
-- Python (Django + DRF)
-- SQLite (dev)
-- LangChain / OpenAI SDK
+## Project structure
 
-## Architecture
-
-### Components
-- **Web Client** in [Frontend/](Frontend/)
-  - UI, routing, auth context, API clients
-- **API Server** in [Backend/](Backend/)
-  - Auth, notebooks, topics, chat, resources, uploads
-  - Orchestrates AI calls and file processing
-- **AI Service** in [notsy/](notsy/)
-  - Embeddings, dataset utilities, AI endpoints
-
-### Data Flow
-1. User interacts with the Web Client.
-2. Web Client calls the API Server.
-3. API Server reads/writes to MongoDB and serves uploads.
-4. For AI features, the API Server calls the AI Service and OpenAI.
-5. Responses are returned to the Web Client.
-
-### High-Level Diagram
-```mermaid
-flowchart LR;
-   U["User"] --> WC["Web Client (React)"];
-   WC --> API["API Server (Express)"];
-   API --> DB[("MongoDB")];
-   API --> AI["AI Service (Django)"];
-   API --> OAI["OpenAI API"];
-   AI --> API;
-   API --> WC;
+```text
+Notsy/
+|- Frontend/           # React + Vite application
+|- Backend/            # Express API, authentication, uploads, resources
+|- Backend/uploads/    # Uploaded PDF files
+`- notsy/              # Python AI service
 ```
 
-## Getting Started
+## Run locally
 
 ### Prerequisites
-- Node.js and npm
-- Python 3.10+ and pip
-- MongoDB instance
 
-### 1) Backend (Express API)
-1. Install dependencies:
-   - cd Backend
-   - npm install
-2. Create a .env file in Backend/ with:
-   - MONGO_URI=your_mongodb_connection_string
-   - JWT_SECRET=your_jwt_secret
-   - JWT_LIFETIME=1d
-   - OPENAI_ORG_ID=your_openai_org_id
-   - OPENAI_PROJECT_ID=your_openai_project_id
-   - OPENAI_API_KEY=your_openai_api_key
-3. Start the server:
-   - node app.js
+- Node.js 18 or later and npm
+- Python 3.10 or later (for AI-powered ingestion and generated notes)
+- A MongoDB database (local MongoDB or MongoDB Atlas)
 
-### 2) AI Service (Django)
-1. Install dependencies:
-   - cd notsy
-   - python -m venv .venv
-   - .venv\Scripts\activate
-   - pip install -r requirements.txt
-2. Start the server:
-   - python manage.py runserver 8000
+### 1. Configure the API
 
-### 3) Frontend (Vite)
-1. Install dependencies:
-   - cd Frontend
-   - npm install
-2. Start the dev server:
-   - npm run dev
+Install the backend dependencies:
 
-## Environment Notes
-- The API server expects the AI Service at http://127.0.0.1:8000.
-- The Web Client uses http://localhost:3000/notsy as its API base URL.
-- CORS is configured to allow http://localhost:5173.
-- Uploaded files are served from /uploads on the API server.
+```powershell
+cd Backend
+npm install
+```
 
-## Repository Structure
-- [Frontend/](Frontend/) — UI and client logic
-- [Backend/](Backend/) — REST API and integrations
-- [Backend/uploads/](Backend/uploads/) — uploaded files
-- [notsy/](notsy/) — Django AI service
+Create `Backend/.env` and add your own values:
 
+```env
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secure_secret
+JWT_LIFETIME=1d
+OPENAI_API_KEY=your_api_key
+OPENAI_ORG_ID=your_organization_id
+OPENAI_PROJECT_ID=your_project_id
+```
 
+Start the API:
+
+```powershell
+npm run dev
+```
+
+The API runs on `http://localhost:3000` and serves uploads from `/uploads`.
+
+### 2. Start the AI service
+
+The API expects the AI service at `http://127.0.0.1:8000` for document ingestion and note generation.
+
+```powershell
+cd notsy
+python -m venv .venv
+.venv\\Scripts\\Activate.ps1
+pip install -r requirements.txt
+python manage.py runserver 8000
+```
+
+### 3. Start the client
+
+In another terminal:
+
+```powershell
+cd Frontend
+npm install
+npm run dev
+```
+
+Open the Vite address shown in the terminal (normally `http://localhost:5173`).
+
+## Useful scripts
+
+| Location | Command | Purpose |
+| --- | --- | --- |
+| `Frontend` | `npm run dev` | Run the development client |
+| `Frontend` | `npm run build` | Create a production client build |
+| `Frontend` | `npm run lint` | Check client code with ESLint |
+| `Backend` | `npm run dev` | Run the API with automatic restarts |
+| `Backend` | `npm start` | Run the API normally |
+
+## Configuration notes
+
+- The frontend sends API requests to `http://localhost:3000/notsy`.
+- CORS is configured for the local Vite client at `http://localhost:5173`.
+- Never commit `.env` files or API keys.
+- For MongoDB Atlas, add your current IP address to the Atlas network access list. A connection error such as `ReplicaSetNoPrimary` or a TLS alert often means Atlas access, DNS, or network rules need checking.
+
+## Product flow
+
+1. Sign up and create a notebook.
+2. Add topics to keep ideas focused.
+3. Attach PDFs or videos as study resources.
+4. Open a resource to chat, create flashcards, or generate notes.
+5. Use the knowledge map to see and navigate the relationships between your work.
+
+---
+
+Built for quieter, more connected learning.

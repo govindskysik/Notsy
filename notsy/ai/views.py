@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from . import utils
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 # client = utils.initialize_openai_client()
 
@@ -166,6 +169,11 @@ class makeNotes(APIView):
         try:
             notes = utils.noteGenerator(context=context)
         except Exception as e:
+            if isinstance(e, utils.GeminiRateLimitError):
+                return Response({
+                    "error": str(e),
+                    "retryAfterSeconds": e.retry_after_seconds,
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
             return Response({"error": f'Unable to generate Notes, Error {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({"message": notes}, status=status.HTTP_200_OK)
     
@@ -202,6 +210,11 @@ class makeFlashCards(APIView):
         try:
             notes = utils.flashcardGenerator(context=context)
         except Exception as e:
+            if isinstance(e, utils.GeminiRateLimitError):
+                return Response({
+                    "error": str(e),
+                    "retryAfterSeconds": e.retry_after_seconds,
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
             return Response({"error": f'Unable to generate Notes, Error {str(e)}' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({"message": notes}, status=status.HTTP_200_OK)
     
@@ -272,7 +285,10 @@ class miniRag(APIView):
                                 "topic_id": topicId,
                                 "user_id": userId                            }
                         )
+                    except ValueError as e:
+                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
                     except Exception as e:
+                        logger.exception('PDF processing failed')
                         return Response({"error": f'Unable to Upsert uploaded PDF: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             elif data_type == 'video':
@@ -299,6 +315,7 @@ class miniRag(APIView):
                 return Response({"error": "Invalid type provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
+            logger.exception('AI upload processing failed')
             return Response({"error": f'Python unable to process {data_type},\nError {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"message": f"Successfully saved {data_type} to vector-db"}, status=status.HTTP_200_OK)

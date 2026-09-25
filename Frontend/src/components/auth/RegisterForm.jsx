@@ -107,10 +107,11 @@ const RegisterForm = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="auth-form-wrap">
+      <div className="auth-form-intro"><span className="auth-kicker">Start your workspace</span><h1>Create your account</h1><p>A calmer system for your most important ideas.</p></div>
+      <form onSubmit={handleSubmit} className="auth-form">
         <div>
-          <label htmlFor="name" className="block  text-sm font-medium text-gray-700">
+          <label htmlFor="name" className="auth-label">
             Full Name
           </label>
           <input
@@ -120,7 +121,7 @@ const RegisterForm = () => {
             placeholder = "Username"
             value={formData.name}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-md border border-base-navgray px-3 py-2 focus:outline-none focus:ring-1 ${
+            className={`auth-input ${
               errors.name
                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                 : 'border-gray-300 focus:border-primary focus:ring-primary'
@@ -133,7 +134,7 @@ const RegisterForm = () => {
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="auth-label">
             Email
           </label>
           <input
@@ -143,7 +144,7 @@ const RegisterForm = () => {
             placeholder="Email id"
             value={formData.email}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-md border border-base-navgray px-3 py-2 focus:outline-none focus:ring-1 ${
+            className={`auth-input ${
               errors.email
                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                 : 'border-gray-300 focus:border-primary focus:ring-primary'
@@ -156,7 +157,7 @@ const RegisterForm = () => {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="auth-label">
             Password
           </label>
           <div className="relative">
@@ -166,7 +167,7 @@ const RegisterForm = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md shadow-md border border-base-navgray px-3 py-2 pr-10 focus:outline-none focus:ring-1 ${
+              className={`auth-input pr-10 ${
                 errors.password
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                   : 'border-gray-300 focus:border-primary focus:ring-primary'
@@ -176,7 +177,7 @@ const RegisterForm = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              className="auth-eye absolute right-3 top-1/2 transform -translate-y-1/2"
             >
               {showPassword ? (
                 <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -213,7 +214,7 @@ const RegisterForm = () => {
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="confirmPassword" className="auth-label">
             Confirm Password
           </label>
           <div className="relative">
@@ -223,7 +224,7 @@ const RegisterForm = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className={`mt-1 block w-full mb-6 rounded-md shadow-md border border-base-navgray px-3 py-2 focus:outline-none focus:ring-1 ${
+              className={`auth-input pr-10 mb-2 ${
                 errors.confirmPassword
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                   : 'border-gray-300 focus:border-primary focus:ring-primary'
@@ -233,7 +234,7 @@ const RegisterForm = () => {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              className="auth-eye absolute right-3 top-1/2 transform -translate-y-1/2"
             >
               {showConfirmPassword ? (
                 <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -250,15 +251,15 @@ const RegisterForm = () => {
         <button
           type="submit"
           disabled={loading || Object.keys(errors).length > 0}
-          className="w-full bg-base-black text-base-white py-3 px-4 rounded-md hover:bg-primary-hover transition duration-300 disabled:opacity-50"
+          className="auth-submit w-full transition duration-300 disabled:opacity-50"
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="auth-foot">
         Already have an account?{' '}
-        <Link to="/auth/login" className="text-primary hover:text-primary-hover font-medium">
+        <Link to="/auth/login" className="auth-link">
           Sign in
         </Link>
       </p>

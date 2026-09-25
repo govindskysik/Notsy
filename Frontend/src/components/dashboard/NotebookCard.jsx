@@ -1,28 +1,24 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { assets } from '../../assets/assets';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
-import axios from '../../utils/axios';
+import { LuBookOpen, LuBrain, LuCode, LuFlaskConical, LuGraduationCap, LuLayers3, LuLightbulb, LuNotebookPen } from 'react-icons/lu';
+
+const notebookIcons = [LuBookOpen, LuBrain, LuCode, LuFlaskConical, LuGraduationCap, LuLayers3, LuLightbulb, LuNotebookPen];
+
+const getNotebookIcon = (name = '') => {
+  const index = [...name].reduce((total, character) => total + character.charCodeAt(0), 0) % notebookIcons.length;
+  return notebookIcons[index];
+};
 
 const NotebookCard = ({ notebook, onDelete }) => {
-  const [imageError, setImageError] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const createdDate = notebook.createdAt ? 
     format(new Date(notebook.createdAt), 'MMM d, yyyy') : 
     'Recent';
 
-  const getImageUrl = () => {
-    if (notebook.path) {
-      const imageUrl = `http://localhost:3000${notebook.path}`;
-      console.log('Image URL:', imageUrl);
-      console.log('Notebook path:', notebook.path);
-      return imageUrl;
-    }
-    console.log('Using default image');
-    return assets.defaultNotebook;
-  };
+  const NotebookIcon = getNotebookIcon(notebook.name);
 
   const handleDelete = async (e) => {
     e.stopPropagation(); // Stop event from bubbling up
@@ -47,18 +43,10 @@ const NotebookCard = ({ notebook, onDelete }) => {
   };
 
   return (
-    <div className="group relative h-[200px] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-      <div className="aspect-[4/3] overflow-hidden bg-gray-100">
-        <img
-          src={imageError ? assets.defaultNotebook : getImageUrl()}
-          alt={notebook.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            console.error('Image load error:', e);
-            setImageError(true);
-          }}
-          loading="lazy"
-        />
+    <div className="dashboard-notebook-card group relative h-[200px] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+      <div className="notebook-icon-cover aspect-[4/3] overflow-hidden">
+        <NotebookIcon aria-hidden="true" />
+        <span>{String(notebook.name || 'N').slice(0, 1).toUpperCase()}</span>
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute bottom-0 p-4 w-full">

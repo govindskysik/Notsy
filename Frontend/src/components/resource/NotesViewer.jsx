@@ -18,7 +18,7 @@ const NotesViewer = ({ notes, topicId, onNotesUpdate }) => {
       }
     } catch (error) {
       console.error('Error creating notes:', error);
-      toast.error(error.response?.data?.msg || 'Failed to create notes');
+      toast.error(error.response?.data?.error || error.response?.data?.msg || 'Failed to create notes');
     } finally {
       setLoading(false);
     }

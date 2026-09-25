@@ -15,7 +15,10 @@ const createTopic=async(req,res)=>{
         throw new BadRequestError('Topic already exists')
       }
 
-      const imagePath=`/uploads/coverImages/${req.files['coverImage'][0].filename}`;
+      const coverImage = req.files?.coverImage?.[0];
+      const imagePath = coverImage
+        ? `/uploads/coverImages/${coverImage.filename}`
+        : undefined;
 
       const newTopic =await topicModel.Topic.create({title:topic,path:imagePath,folderId:folderId,userId:userId});
       // console.log('hi')

@@ -1,7 +1,6 @@
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pinecone import Pinecone, ServerlessSpec
 from dotenv import load_dotenv
-from openai import OpenAI
 from PyPDF2 import PdfReader
 import pandas as pd
 import requests
@@ -10,35 +9,182 @@ import tempfile
 import uuid
 import json
 import os
-
-load_dotenv()
+import time
+import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(os.path.dirname(BASE_DIR), '.env'))
 
-OPENAI_DF = pd.read_csv(os.path.join(BASE_DIR, 'openai_docs_chunked.csv'))
-GFG_DF = pd.read_csv(os.path.join(BASE_DIR, 'gfg_cleaned.csv'))
+def load_reference_data(filename, columns):
+    path = os.path.join(BASE_DIR, filename)
+    if os.path.exists(path):
+        return pd.read_csv(path)
+    return pd.DataFrame(columns=columns)
+
+
+OPENAI_DF = load_reference_data('openai_docs_chunked.csv', ['id', 'text'])
+GFG_DF = load_reference_data('gfg_cleaned.csv', ['url', 'text'])
+
+class GeminiRateLimitError(RuntimeError):
+    def __init__(self, retry_after_seconds=None):
+        self.retry_after_seconds = retry_after_seconds
+        if retry_after_seconds:
+            minutes = max(1, round(retry_after_seconds / 60))
+            message = f'Gemini free-tier quota reached. Please wait about {minutes} minute(s) and try again.'
+        else:
+            message = 'Gemini free-tier quota reached. Please wait and try again later.'
+        super().__init__(message)
+
+
+    generation_retry_until = 0
+
+
+class GeminiResponse:
+    def __init__(self, output_text):
+        self.output_text = output_text
+
+
+class GeminiEmbeddings:
+    def __init__(self, api_key, model):
+        self.api_key = api_key
+        self.model = model
+
+    def create(self, input, model=None):
+        embeddings = []
+        for text in input:
+            url = f'https://generativelanguage.googleapis.com/v1beta/models/{model or self.model}:embedContent'
+            response = requests.post(
+                url,
+                params={'key': self.api_key},
+                json={
+                    'content': {'parts': [{'text': text.replace('\n', ' ')}]},
+                    'outputDimensionality': 3072,
+                },
+                timeout=60,
+            )
+            if not response.ok:
+                raise RuntimeError(
+                    f'Gemini embedding request failed ({response.status_code}): '
+                    f'{response.text[:500]}'
+                )
+            embeddings.append(type('Embedding', (), {
+                'embedding': response.json()['embedding']['values']
+            })())
+        return type('EmbeddingResponse', (), {'data': embeddings})()
+
+
+class GeminiResponses:
+    def __init__(self, api_key, default_model):
+        self.api_key = api_key
+        self.default_model = default_model
+
+    def create(self, model=None, input=None, text=None, temperature=None, max_output_tokens=None):
+        global generation_retry_until
+        remaining = generation_retry_until - time.time()
+        if remaining > 0:
+            raise GeminiRateLimitError(remaining)
+
+        contents = input if isinstance(input, list) else [{'role': 'user', 'content': input or ''}]
+        system_instruction = None
+        parts = []
+        for message in contents:
+            role = message.get('role', 'user')
+            content = message.get('content', '')
+            if isinstance(content, list):
+                content = '\n'.join(str(part.get('text', part)) for part in content)
+            if role == 'developer' or role == 'system':
+                system_instruction = {'parts': [{'text': str(content)}]}
+            else:
+                parts.append({'text': str(content)})
+
+        generation_config = {}
+        if temperature is not None:
+            generation_config['temperature'] = temperature
+        if max_output_tokens is not None:
+            generation_config['maxOutputTokens'] = max_output_tokens
+        if text and text.get('format', {}).get('type') == 'json_schema':
+            generation_config['responseMimeType'] = 'application/json'
+            generation_config['responseSchema'] = self._gemini_schema(text['format']['schema'])
+
+        payload = {'contents': [{'role': 'user', 'parts': parts}]}
+        if system_instruction:
+            payload['systemInstruction'] = system_instruction
+        if generation_config:
+            payload['generationConfig'] = generation_config
+
+        selected_model = model or self.default_model
+        if selected_model.startswith('gpt-'):
+            selected_model = self.default_model
+        for attempt in range(3):
+            response = requests.post(
+                f'https://generativelanguage.googleapis.com/v1beta/models/{selected_model}:generateContent',
+                params={'key': self.api_key},
+                json=payload,
+                timeout=180,
+            )
+            if response.status_code == 429:
+                break
+            if response.status_code not in (500, 502, 503, 504) or attempt == 2:
+                break
+            time.sleep(2 ** attempt)
+        if not response.ok:
+            if response.status_code == 429:
+                match = re.search(r'retry in ([0-9.]+)s', response.text, re.IGNORECASE)
+                retry_after = float(match.group(1)) if match else None
+                generation_retry_until = time.time() + (retry_after or 60)
+                raise GeminiRateLimitError(retry_after)
+            raise RuntimeError(
+                f'Gemini generation failed ({response.status_code}): {response.text[:500]}'
+            )
+        candidates = response.json().get('candidates', [])
+        if not candidates:
+            raise RuntimeError('Gemini returned no candidates')
+        output_text = ''.join(
+            part.get('text', '') for part in candidates[0].get('content', {}).get('parts', [])
+        )
+        return GeminiResponse(output_text)
+
+    def _gemini_schema(self, schema):
+        if isinstance(schema, dict):
+            converted = {
+                key: self._gemini_schema(value)
+                for key, value in schema.items()
+                if key not in ('additionalProperties', 'strict')
+            }
+            if isinstance(converted.get('type'), str):
+                converted['type'] = converted['type'].upper()
+            return converted
+        if isinstance(schema, list):
+            return [self._gemini_schema(value) for value in schema]
+        return schema
+
+
+class GeminiClient:
+    def __init__(self):
+        self.api_key = os.getenv('GEMINI_API_KEY')
+        if not self.api_key:
+            raise RuntimeError('GEMINI_API_KEY is not configured')
+        model = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+        embedding_model = os.getenv('GEMINI_EMBEDDING_MODEL', 'gemini-embedding-001')
+        self.responses = GeminiResponses(self.api_key, model)
+        self.embeddings = GeminiEmbeddings(self.api_key, embedding_model)
+
 
 def initialize_openai_client():
-    key = os.getenv('OPENAI_API_KEY')
-    org_key = os.getenv('OPENAI_ORG_KEY')
-    project_id = os.getenv('OPENAI_PROJECT_ID')
-
-    client = OpenAI(
-        api_key=key,
-        organization=org_key,
-        project=project_id,
-    )
-    
-    return client
+    return GeminiClient()
 
 def initialize_pincone():
     pine_key = os.getenv('PINE_API_KEY')
-    host = os.getenv('PINE_HOST')
+    host = os.getenv('PINE_HOST', '').strip().removeprefix('https://').removeprefix('http://').rstrip('/')
+    if not pine_key or pine_key.startswith('your_'):
+        raise RuntimeError('PINE_API_KEY is missing or still uses the placeholder value')
+    if not host or host.startswith('your_'):
+        raise RuntimeError('PINE_HOST is missing or still uses the placeholder value')
     pc = Pinecone(api_key=pine_key)
     index = pc.Index(host=host)
     return index 
 
-def get_embedding(client,text, model="text-embedding-3-large"):
+def get_embedding(client, text, model=None):
     text = text.replace("\n", " ")
     return client.embeddings.create(input = [text], model=model).data[0].embedding
 
@@ -140,18 +286,23 @@ def clean_messages_for_gpt(messages):
     return [{"role": msg["role"], "content": msg["content"]} for msg in messages if "role" in msg and "content" in msg]
 
 def moded_query(text, mode, user_id, topic_id):
-    # Get both gfg and user specific 
+    # Include the active topic's uploaded resources in every chat mode.
     context = []
     i = 1
     try:
+        if user_id and topic_id:
+            resource_results = query(text, user_id, 5)
+            filtered_resources = [
+                doc for doc in resource_results
+                if doc.get("metadata", {}).get("topic_id") == topic_id
+            ]
+            for doc in filtered_resources:
+                content = doc.get("content", "")
+                context.append({"role": "system", "content": f"[Uploaded resource #{i}] {content}"})
+                i += 1
+
         if mode == "0":
             # Default Mode
-            mini_rag_results = query(text, user_id, 2)
-            filtered_rag = [doc for doc in mini_rag_results if doc.get("metadata", {}).get("topic_id") == topic_id]
-            for doc in filtered_rag:
-                content = doc.get("content", "")
-                context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
-                i+=1
             academic_rag_results = query(text, "gfg", 2)
             for doc in academic_rag_results:
                 content = doc.get("content", "")
@@ -183,6 +334,9 @@ def moded_query(text, mode, user_id, topic_id):
                 content = doc.get("content", "")
                 context.append({"role": "system", "content": f"[RAG #{i}] {content}"})
                 i+=1
+        elif mode == "5":
+            # Uploaded resources were added above for every mode.
+            pass
     except Exception as e:
         raise Exception(f"Error in querying data from pinecone: {str(e)}")
     return context
@@ -207,6 +361,8 @@ def get_response(input,max_tokens=-1, temp=-1 ,model="gpt-4.1"):
     try:
         response = client.responses.create(**req_data)
     except Exception as e:
+        if isinstance(e, GeminiRateLimitError):
+            raise
         raise Exception(f"Error in getting response from OpenAI: {str(e)}")
     return response
 
@@ -371,6 +527,8 @@ def get_pdf_text(file):
             extracted = page.extract_text()
             if extracted:
                 text += extracted
+        if not text.strip():
+            raise ValueError('PDF contains no extractable text; scanned PDFs require OCR')
         return text
     except Exception as e:
         raise Exception(f"PDF extraction failed: {str(e)}")

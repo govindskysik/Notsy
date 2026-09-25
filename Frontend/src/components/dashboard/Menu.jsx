@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
 import { assets } from "../../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
@@ -36,45 +35,40 @@ const Menu = ({ notebooks = [], topics = {}, loading, onAddNotebookClick }) => {
   };
 
   return (
-    <div className="h-full relative flex flex-col min-w-64">
+    <div className="dashboard-menu h-full relative flex flex-col min-w-64">
       <div className="p-6 flex flex-col h-full">
         {/* Logo and Add Button - Fixed */}
         <div className="flex-none">
-          <div className="flex items-center gap-2 mb-8">
-            <img className="w-6 h-6" src={assets.logo} alt="Logo" />
+          <div className="dashboard-brand flex items-center gap-2 mb-8">
+            <span className="dashboard-brand-mark"><img className="w-6 h-6" src={assets.logo} alt="Logo" /></span>
             <h1 className="text-3xl font-bold">NOTSY</h1>
           </div>
 
-          <button
-            onClick={onAddNotebookClick}
-            className="flex bg-primary items-center gap-2 w-full p-4 text-sm font-medium text-base-white hover:bg-primary-hover rounded-lg transition-colors"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Add New Notebook
-          </button>
-
-          <div className="w-full h-4 mt-4">
-            <img className="w-full h-full" src={assets.Seprator} alt="" />
-          </div>
+          <div className="dashboard-rule w-full mt-4" />
         </div>
 
         {/* Notebooks List with Topics */}
         <nav className="mt-4 flex-1 min-h-0">
-          <p className="mb-4">Recent</p>
+          <div className="dashboard-side-links">
+            <button className="is-active">Home</button>
+            <button>Library</button>
+            <button>Favorites</button>
+            <button>Recent</button>
+          </div>
+          <p className="dashboard-section-label mb-4">Workspaces</p>
           <div className="h-[calc(100%-2rem)] overflow-y-auto scrollbar-hide">
             {loading ? (
               <div className="flex justify-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <ul className="space-y-4 pr-2">
+              <ul className="space-y-2 pr-2">
                 {notebooks.map((notebook) => (
                   <li key={notebook._id}>
                     <div className="space-y-2">
                       <button
                         onClick={(e) => handleNotebookClick(e, notebook._id)}
-                        className="flex items-center justify-between w-full bg-cover text-primary-hover bg-center p-4 text-left text-sm font-bold tracking-wide hover:bg-primary/20 rounded-xl transition-colors"
-                        style={{ backgroundImage: `url(${assets.Listbg})` }}
+                        className="dashboard-notebook-row flex items-center justify-between w-full p-4 text-left text-sm font-bold tracking-wide rounded-xl transition-colors"
                       >
                         <div className="flex gap-2">
                           <LuNotebook size={18} />
@@ -97,7 +91,7 @@ const Menu = ({ notebooks = [], topics = {}, loading, onAddNotebookClick }) => {
                               <button
                                 key={topic._id}
                                 onClick={(e) => handleTopicClick(e, topic._id)}
-                                className="w-full text-left p-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-2"
+                                className="w-full text-left p-2 text-sm text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-2"
                               >
                                 <span className="w-1 h-1 rounded-full bg-primary/60"></span>
                                 {topic.title}
@@ -120,8 +114,7 @@ const Menu = ({ notebooks = [], topics = {}, loading, onAddNotebookClick }) => {
 
         {/* Profile Section */}
         <div
-          className="flex gap-4 absolute w-52 h-40 flex-col bottom-6 bg-cover items-center bg-center px-2 py-5 text-primary-hover rounded-xl hover:bg-primary-hover/20 transition-all"
-          style={{ backgroundImage: `url(${assets.Listbg})` }}
+          className="dashboard-profile flex gap-4 absolute w-52 h-40 flex-col bottom-6 items-center px-2 py-5 rounded-xl transition-all"
         >
           <div className="flex w-full text-nowrap items-center gap-2 px-2">
             <img className="h-10" src={assets.profile} alt="" />
@@ -132,7 +125,7 @@ const Menu = ({ notebooks = [], topics = {}, loading, onAddNotebookClick }) => {
           <p className="text-sm">{user?.email}</p>
           <button 
             onClick={handleLogout}
-            className="flex justify-center items-center w-full px-4 rounded-xl py-2 text-base-white bg-[#FF4F5B]"
+            className="flex justify-center items-center w-full px-4 rounded-xl py-2 text-white bg-[#d84b3f]"
           >
             <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
             Logout

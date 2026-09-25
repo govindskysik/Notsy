@@ -1,284 +1,359 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowRightIcon,
+  BookOpenIcon,
+  ChatBubbleLeftRightIcon,
+  CheckIcon,
+  CommandLineIcon,
+  LinkIcon,
+  PlayIcon,
+  SparklesIcon,
+  Squares2X2Icon,
+} from "@heroicons/react/24/outline";
 import { assets } from "../assets/assets.js";
+
+const workflowSteps = [
+  {
+    number: "01",
+    title: "Drop in what you have.",
+    copy: "Create a notebook, add class notes, and attach the material you want to keep close.",
+    icon: BookOpenIcon,
+  },
+  {
+    number: "02",
+    title: "Break it into topics.",
+    copy: "Give each idea its own home so revision material stays easy to find later.",
+    icon: Squares2X2Icon,
+  },
+  {
+    number: "03",
+    title: "Ask from the source.",
+    copy: "Use the assistant while your notes and resources are right there for context.",
+    icon: ChatBubbleLeftRightIcon,
+  },
+  {
+    number: "04",
+    title: "Come back prepared.",
+    copy: "Turn key points into flashcards and pick up exactly where you left off.",
+    icon: SparklesIcon,
+  },
+];
+
+const graphNodes = [
+  {
+    name: "Operating systems",
+    meta: "Notebook",
+    x: "48%",
+    y: "48%",
+    type: "core",
+    icon: BookOpenIcon,
+  },
+  {
+    name: "Processes",
+    meta: "Topic",
+    x: "23%",
+    y: "26%",
+    type: "orange",
+    icon: Squares2X2Icon,
+  },
+  {
+    name: "Memory",
+    meta: "Topic",
+    x: "76%",
+    y: "24%",
+    type: "gold",
+    icon: Squares2X2Icon,
+  },
+  {
+    name: "Scheduling",
+    meta: "Topic",
+    x: "79%",
+    y: "70%",
+    type: "cool",
+    icon: CommandLineIcon,
+  },
+  {
+    name: "Deadlocks",
+    meta: "Topic",
+    x: "25%",
+    y: "73%",
+    type: "orange",
+    icon: SparklesIcon,
+  },
+];
+
+function ProductGraph() {
+  const [selected, setSelected] = useState("Operating systems");
+  return (
+    <div className="landing-graph" aria-label="Example Notsy knowledge map">
+      <p className="landing-map-kicker">
+        <span /> Live workspace preview
+      </p>
+      <div className="landing-graph-canvas">
+        <div className="landing-graph-orbit orbit-a" />
+        <div className="landing-graph-orbit orbit-b" />
+        <svg
+          className="landing-graph-lines"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path className="is-connected" d="M48 48 C38 41 32 34 23 26" />
+          <path className="is-connected" d="M48 48 C60 40 67 31 76 24" />
+          <path className="is-connected" d="M48 48 C60 55 69 64 79 70" />
+          <path className="is-connected" d="M48 48 C39 57 31 66 25 73" />
+          <path className="is-lit" d="M23 26 C47 21 57 22 76 24" />
+        </svg>
+        {graphNodes.map(({ name, meta, x, y, type, icon: Icon }) => (
+          <button
+            type="button"
+            key={name}
+            className={`landing-graph-node ${type} ${selected === name ? "is-selected" : ""}`}
+            style={{ left: x, top: y }}
+            onClick={() => setSelected(name)}
+          >
+            <span className="landing-node-icon">
+              {React.createElement(Icon)}
+            </span>
+            <span className="landing-node-name">{name}</span>
+            <span className="landing-node-meta">{meta}</span>
+          </button>
+        ))}
+        <div className="landing-graph-inspector">
+          <span>Viewing</span>
+          <strong>{selected}</strong>
+          <button type="button" aria-label="Open selected topic">
+            <ArrowRightIcon />
+          </button>
+        </div>
+      </div>
+      <p className="landing-map-hint">
+        Select a topic to follow its connections
+      </p>
+    </div>
+  );
+}
 
 const Landing = () => {
   const navigate = useNavigate();
-
-  const homeRef = useRef(null);
-  const aboutRef = useRef(null);
   const featuresRef = useRef(null);
-
-  const handleGetStarted = () => {
-    navigate("/auth/register");
+  const pageRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const goToRegister = () => navigate("/auth/register");
+  const goToSignIn = () => navigate("/auth/login");
+  const scrollToFeatures = () => {
+    featuresRef.current?.scrollIntoView({ behavior: "smooth" });
+    setMenuOpen(false);
   };
-
-  const scrollToSection = (elementRef) => {
-    elementRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  useEffect(() => {
+    const sections = pageRef.current?.querySelectorAll(".landing-reveal") || [];
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        }),
+      { threshold: 0.12 },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
   return (
-    <>
-      <div className="h-screen bg-base-white overflow-y-auto no-scrollbar relative">
-        {/* Navigation Bar */}
-        <nav className="flex  px-16 py-5 items-center justify-between top-0 p-2 rounded-lg z-50">
-          <div className="flex items-center gap-2">
-            <img className="w-8 h-8" src={assets.logo} alt="Logo" />
-            <h1 className="text-4xl font-black">NOTSY</h1>
-          </div>
-          <div>
-            <ul className="flex rounded-lg items-center bg-base-navgray py-2 px-6 text-lg gap-4">
-              <li className="hover:bg-base-black hover:text-white px-2 py-1 rounded-md cursor-pointer transition-all">
-                <button onClick={() => scrollToSection(homeRef)}>Home</button>
-              </li>
-              <span>|</span>
-              <li className="hover:bg-base-black hover:text-white px-2 py-1 rounded-md cursor-pointer transition-all">
-                <button onClick={() => scrollToSection(featuresRef)}>
-                  Features
-                </button>
-              </li>
-              <span>|</span>
-              <li className="hover:bg-base-black hover:text-white px-2 py-1 rounded-md cursor-pointer transition-all">
-                <button onClick={() => scrollToSection(aboutRef)}>About</button>
-              </li>
-            </ul>
-          </div>
+    <div ref={pageRef} className="cinema-page landing-page">
+      <header className="cinema-header landing-header landing-reveal">
+        <button
+          className="brand-lockup"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <span className="brand-mark">
+            <img src={assets.logo} alt="" />
+          </span>
+          <span>NOTSY</span>
+        </button>
+        <nav
+          className={`landing-nav-pill ${menuOpen ? "is-open" : ""}`}
+          aria-label="Primary navigation"
+        >
           <button
-            onClick={handleGetStarted}
-            className="text-xl bg-base-black text-white py-2 px-4 rounded-lg"
+            className="active"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
-            Get Started
+            Home
           </button>
+          <button onClick={scrollToFeatures}>How it works</button>
+          <button onClick={goToSignIn}>Sign in</button>
         </nav>
-
-        <main className=" px-16 py-5">
-          <section
-            ref={homeRef}
-            className="flex items-center justify-center min-h-[calc(100vh-200px)]"
+        <div className="header-actions">
+          <button className="landing-header-cta" onClick={goToRegister}>
+            <span className="text-white">New here?</span> Sign up <ArrowRightIcon />
+          </button>
+          <button
+            className="menu-toggle"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
           >
-            <div className="max-w-2xl flex flex-col items-center">
-              <h2 className="text-3xl font-bold text-center">
-                One platform to simplify learning with AI and visual
-                connections.
-              </h2>
-              <h1 className="flex items-center gap-8 mt-20 text-9xl font-bold text-nowrap">
-                Link{" "}
-                <span className="bg-base-black text-8xl px-6 py-2 rounded-xl text-white font-do-hyeon">
-                  &
-                </span>{" "}
-                Learn
-              </h1>
-              <button
-                onClick={handleGetStarted}
-                className="flex gap-4 px-8 items-center mt-14 py-3 bg-primary text-white rounded-lg text-xl font-medium hover:bg-primary-hover transition-all"
-              >
-                <img className="w-10 h-10" src={assets.buttonicons} alt="" />
-                Get Started
-              </button>
-            </div>
-          </section>
-
-          {/* Hero Image Section */}
-          <section>
-            <img
-              className="rounded-xl drop-shadow-xl hover:grow shadow-primary"
-              src={assets.HeroImage}
-              alt=""
-            />
-          </section>
-
-          {/* Features Section */}
-          <section ref={featuresRef} className="mt-32 min-h-screen">
-            <h3 className="text-4xl font-bold text-center">Key Features</h3>
-            <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
-              {/* AI Chat Feature */}
-              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <span className="text-2xl">🤖</span>
-                </div>
-                <h4 className="text-xl font-semibold mb-4">AI-Powered Chat</h4>
-                <p className="text-gray-600">
-                  Engage in intelligent conversations with our AI assistant to
-                  better understand your study materials and get instant help.
-                </p>
-              </div>
-
-              {/* Visual Graph Feature */}
-              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <span className="text-2xl">🔗</span>
-                </div>
-                <h4 className="text-xl font-semibold mb-4">
-                  Visual Knowledge Graph
-                </h4>
-                <p className="text-gray-600">
-                  Visualize connections between your notebooks, topics, and
-                  resources with our interactive knowledge graph system.
-                </p>
-              </div>
-
-              {/* Resource Management */}
-              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <span className="text-2xl">📚</span>
-                </div>
-                <h4 className="text-xl font-semibold mb-4">
-                  Resource Management
-                </h4>
-                <p className="text-gray-600">
-                  Organize your study materials with notebooks and topics.
-                  Upload videos and PDFs for easy access and reference.
-                </p>
-              </div>
-
-              {/* Smart Organization */}
-              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <span className="text-2xl">📋</span>
-                </div>
-                <h4 className="text-xl font-semibold mb-4">Smart Organization</h4>
-                <p className="text-gray-600">
-                  Create structured notebooks and topics to keep your learning
-                  materials organized and easily accessible.
-                </p>
-              </div>
-
-              {/* Interactive Learning */}
-              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <span className="text-2xl">🎯</span>
-                </div>
-                <h4 className="text-xl font-semibold mb-4">
-                  Interactive Learning
-                </h4>
-                <p className="text-gray-600">
-                  Engage with your study materials through interactive features,
-                  including AI chat assistance and visual connections.
-                </p>
-              </div>
-
-              {/* Progress Tracking */}
-              <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <span className="text-2xl">📊</span>
-                </div>
-                <h4 className="text-xl font-semibold mb-4">Progress Tracking</h4>
-                <p className="text-gray-600">
-                  Monitor your learning journey with detailed statistics,
-                  streaks, and usage analytics.
-                </p>
-              </div>
-            </div>
-
-            {/* Call to Action */}
-            <div className="mt-16 text-center">
-              <button
-                onClick={handleGetStarted}
-                className="bg-primary text-white px-8 py-4 rounded-xl text-xl font-medium hover:bg-primary-hover transition-all"
-              >
-                Start Learning Now
-              </button>
-            </div>
-          </section>
-
-          {/* About Section */}
-          <section ref={aboutRef} className="mt-32 min-h-screen">
-            <h3 className="text-4xl font-bold text-center">About Us</h3>
-            <p className="mt-6 text-xl text-gray-600 text-center">
-              Notsy is dedicated to revolutionizing the way students learn and
-              interact with study materials. Our AI-powered tools are designed
-              to make studying more efficient and effective.
+            <span />
+            <span />
+          </button>
+        </div>
+      </header>
+      <main>
+        <section className="landing-hero landing-reveal">
+          <div className="landing-hero-copy">
+            <p className="eyebrow">
+              <span /> Your study space
             </p>
-          </section>
-
-          {/* Stats Section */}
-          <section className="mt-32 py-16 bg-gray-50 rounded-2xl">
-            <div className="flex justify-around text-center">
-              <div>
-                <h4 className="text-5xl font-bold text-primary">10K+</h4>
-                <p className="mt-2 text-gray-600">Active Users</p>
-              </div>
-              <div>
-                <h4 className="text-5xl font-bold text-primary">50K+</h4>
-                <p className="mt-2 text-gray-600">Documents Analyzed</p>
-              </div>
-              <div>
-                <h4 className="text-5xl font-bold text-primary">99%</h4>
-                <p className="mt-2 text-gray-600">Satisfaction Rate</p>
-              </div>
-            </div>
-          </section>
-        </main>
-
-        {/* Footer */}
-        <footer className="relative mt-20">
-          {/* Blob Background */}
-          <div className="absolute bottom-0 right-0 w-[1400px] z-10">
-            <div className="absolute inset-0" />
-            <img
-              src={assets.Blob}
-              alt=""
-              className="w-full h-full object-cover filter blur-sm animate-blob"
-            />
-          </div>
-
-          {/* Footer Content */}
-          <div className="px-16 relative z-20">
-            <div>
-              <h1 className="text-9xl font-bold">Level Up.</h1>
-            </div>
-            <div className="flex items-start justify-between mt-20">
-              <div className="flex gap-4">
-                <div className="border w-10 h-10 rounded-full border-base-black"></div>
-                <div className="border w-10 h-10 rounded-full border-base-black"></div>
-                <div className="border w-10 h-10 rounded-full border-base-black"></div>
-                <div className="border w-10 h-10 rounded-full border-base-black"></div>
-              </div>
-              <div className="flex gap-16">
-                <ul>
-                  <li className="text-lg font-bold">Notsy</li>
-                  <li>About</li>
-                  <li>Contact</li>
-                  <li>Privacy Policy</li>
-                </ul>
-                <ul>
-                  <li className="text-lg font-bold">Company</li>
-                  <li>About</li>
-                  <li>Contact</li>
-                  <li>Privacy Policy</li>
-                </ul>
-                <ul>
-                  <li className="text-lg font-bold">Resources</li>
-                  <li>About</li>
-                  <li>Contact</li>
-                  <li>Privacy Policy</li>
-                </ul>
-                <ul>
-                  <li className="text-lg font-bold">Support</li>
-                  <li>About</li>
-                  <li>Contact</li>
-                  <li>Privacy Policy</li>
-                </ul>
-              </div>
-              <div></div>
-            </div>
-            <div className="flex justify-center mt-20">
+            <h1>
+              Know where
+              <br />
+              <em>everything leads.</em>
+            </h1>
+            <p>
+              Bring notes, sources, and questions into one workspace that
+              remembers how they fit together.
+            </p>
+            <div className="landing-hero-actions">
+              <button className="button-primary" onClick={goToRegister}>
+                Create your workspace <ArrowRightIcon />
+              </button>
               <button
-                onClick={handleGetStarted}
-                className="text-xl bg-base-black text-white py-2 px-4 rounded-lg hover:bg-opacity-90 transition-all duration-300"
+                className="landing-text-button"
+                onClick={scrollToFeatures}
               >
-                Get Started
+                <PlayIcon /> Take a quick look
               </button>
             </div>
-            <div className="flex gap-10 justify-center mt-5 text-gray-500 text-sm">
-              <p>Terms of use </p>
-              <p>Privacy Policies</p>
-              <p>Cookie Prefrences</p>
-            </div>
           </div>
-        </footer>
-      </div>
-    </>
+          <ProductGraph />
+        </section>
+        <section className="landing-proof landing-reveal">
+          <div className="landing-proof-copy">
+            <p className="eyebrow">
+              <span /> One connected place
+            </p>
+            <h2>
+              Your work, <em>in motion.</em>
+            </h2>
+            <p>
+              Notes, flashcards, questions, and sources stay in the same
+              orbit—ready when you need them.
+            </p>
+          </div>
+          <div
+            className="landing-orbit"
+            aria-label="Notes, flashcards, questions and sources connected"
+          >
+            <div className="landing-orbit-ring ring-one" />
+            <div className="landing-orbit-ring ring-two" />
+            <div className="landing-orbit-ring ring-three" />
+            <div className="landing-orbit-ring ring-four" />
+            <div className="landing-orbit-core">
+              {/* <LinkIcon /> */}
+              <span>Your workspace</span>
+            </div>
+            <span className="landing-orbit-track note">
+              <span className="landing-orbit-item">
+                <BookOpenIcon /> Notes
+              </span>
+            </span>
+            <span className="landing-orbit-track cards">
+              <span className="landing-orbit-item">
+                <SparklesIcon /> Flashcards
+              </span>
+            </span>
+            <span className="landing-orbit-track ask">
+              <span className="landing-orbit-item">
+                <ChatBubbleLeftRightIcon /> Questions
+              </span>
+            </span>
+            <span className="landing-orbit-track source">
+              <span className="landing-orbit-item">
+                <LinkIcon /> Sources
+              </span>
+            </span>
+          </div>
+        </section>
+        <section ref={featuresRef} className="landing-workflow landing-reveal">
+          <div className="landing-workflow-intro">
+            <p className="eyebrow">
+              <span /> How it works
+            </p>
+            <h2>
+              Make the
+              <br />
+              <em>next step obvious.</em>
+            </h2>
+          </div>
+          <p className="landing-workflow-note">
+            Start with one notebook. The workspace builds its structure as you
+            add what matters.
+          </p>
+          <div className="landing-step-map">
+            {workflowSteps.map(({ number, title, copy, icon: Icon }, index) => (
+              <article
+                className={`landing-step step-${index + 1}`}
+                key={number}
+              >
+                <span className="landing-step-marker">
+                  {React.createElement(Icon)}
+                </span>
+                <div className="landing-step-copy">
+                  <span className="landing-step-number">{number}</span>
+                  <h3>{title}</h3>
+                  <p>{copy}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="landing-closing landing-reveal">
+          <p className="eyebrow">
+            <span /> Start with one note
+          </p>
+          <h2>
+            A workspace that
+            <br />
+            <em>keeps up with you.</em>
+          </h2>
+          <p>
+            Set up your first notebook and let the connections build from there.
+          </p>
+          <button className="button-primary" onClick={goToRegister}>
+            Get started free <ArrowRightIcon />
+          </button>
+        </section>
+      </main>
+      <footer className="cinema-footer landing-footer landing-reveal">
+        <div>
+          <button
+            className="brand-lockup"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            <span className="brand-mark">
+              <img src={assets.logo} alt="" />
+            </span>
+            <span>NOTSY</span>
+          </button>
+          <p>A place for your notes to make sense together.</p>
+        </div>
+        <div className="landing-footer-links">
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            Home
+          </button>
+          <button onClick={scrollToFeatures}>How it works</button>
+          <button onClick={goToRegister}>Sign in</button>
+        </div>
+        <div className="landing-footer-meta">
+          <span>Built for focused learning</span>
+          <span>© 2026 Notsy</span>
+        </div>
+      </footer>
+    </div>
   );
 };
 

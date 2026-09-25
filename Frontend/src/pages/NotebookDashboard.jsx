@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import Menu from "../components/notebook/NotebookMenu";
+import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 import MainContent from "../components/notebook/NotebookMainContent";
-import { assets } from "../assets/assets";
 import axios from "../utils/axios";
 import { toast } from "react-hot-toast";
 import AddTopicModal from "../components/notebook/AddTopicModal";
+import { assets } from "../assets/assets";
+import { goTo } from "../utils/navigation";
 
 const NotebookDashboard = () => {
   const { notebookId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [topics, setTopics] = useState([]);
   const [notebook, setNotebook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,12 +64,6 @@ const NotebookDashboard = () => {
       topicFormData.append('topic', formData.get('title')); // Topic name
       topicFormData.append('folderId', notebookId); // Parent notebook ID
 
-      // Only append coverImage if it exists
-      const coverImage = formData.get('coverImage');
-      if (coverImage) {
-        topicFormData.append('coverImage', coverImage);
-      }
-
       // Log FormData contents for debugging
       for (let pair of topicFormData.entries()) {
         console.log(pair[0], pair[1]);
@@ -107,37 +100,14 @@ const NotebookDashboard = () => {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
-      <div
-        className="w-full h-full bg-cover bg-center"
-        style={{ backgroundImage: `url(${assets.dashboardbg})` }}
-      >
-        <div className="flex h-full">
-          {/* Sidebar */}
-          <div className="w-64 backdrop-blur-sm">
-            <Menu
-              notebook={notebook}
-              topics={topics}
-              loading={loading}
-              onAddTopicClick={() => setIsModalOpen(true)}
-            />
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 p-5">
-            <div className="backdrop-blur-sm bg-base-white p-7 h-full rounded-xl shadow-sm">
-              <MainContent
-                notebook={notebook}
-                topics={topics}
-                resources={resources}
-                loading={loading}
-                onAddTopic={() => setIsModalOpen(true)}
-                onDeleteTopic={handleDeleteTopic}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="dashboard-shell dashboard-product-shell notebook-page">
+          <header className="dashboard-topbar">
+            <button className="dashboard-topbar-brand" type="button" onClick={() => navigate('/dashboard')}><span className="dashboard-brand-mark"><img src={assets.logo} alt="" /></span><span>NOTSY</span></button>
+            <div className="dashboard-topbar-actions"><button type="button" className="dashboard-new-button" onClick={() => setIsModalOpen(true)}><PlusIcon /> New topic</button><button type="button" className="dashboard-back-button" onClick={() => goTo('/dashboard', { replace: true })}><ArrowLeftIcon /> Back</button></div>
+          </header>
+          <main className="notebook-page-content">
+            <MainContent notebook={notebook} topics={topics} resources={resources} loading={loading} onAddTopic={() => setIsModalOpen(true)} onDeleteTopic={handleDeleteTopic} />
+          </main>
 
       {/* Add Topic Modal */}
       <AddTopicModal

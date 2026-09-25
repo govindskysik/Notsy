@@ -3,7 +3,7 @@ import {Link, useNavigate} from "react-router-dom";
 import {toast} from "react-hot-toast";
 import {EyeIcon, EyeSlashIcon} from "@heroicons/react/24/outline";
 import axios from "../../utils/axios";
-import {assets} from "../../assets/assets";
+
 import {useAuth} from "../../context/AuthContext"; // Add this import
 
 const LoginForm = () => {
@@ -22,7 +22,7 @@ const LoginForm = () => {
 
     switch (name) {
       case "email":
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        { const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!value) {
           newErrors.email = "Email is required";
         } else if (!emailRegex.test(value)) {
@@ -30,7 +30,7 @@ const LoginForm = () => {
         } else {
           delete newErrors.email;
         }
-        break;
+        break; }
 
       case "password":
         if (!value) {
@@ -85,12 +85,13 @@ const LoginForm = () => {
 
   return (
     <>
-      <div className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="auth-form-wrap">
+        <div className="auth-form-intro"><span className="auth-kicker">Welcome back</span><h1>Sign in to your account</h1><p>Pick up where your best thinking left off.</p></div>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="auth-label"
             >
               Email
             </label>
@@ -101,7 +102,7 @@ const LoginForm = () => {
               placeholder="Email"
               value={formData.email}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md shadow-md border border-base-navgray px-3 py-2 focus:outline-none focus:ring-1 transition-colors duration-200 ${
+              className={`auth-input ${
                 errors.email
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:border-primary focus:ring-primary"
@@ -118,7 +119,7 @@ const LoginForm = () => {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
+              className="auth-label"
             >
               Password
             </label>
@@ -130,7 +131,7 @@ const LoginForm = () => {
                 placeholder= "Password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`mt-1 block w-full mb-6 rounded-md shadow-md border border-base-navgray px-3 py-2 pr-10 focus:outline-none focus:ring-1 transition-colors duration-200 ${
+                className={`auth-input mb-2 ${
                   errors.password
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:border-primary focus:ring-primary"
@@ -140,7 +141,7 @@ const LoginForm = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                className="auth-eye absolute right-3 top-1/2 transform -translate-y-1/2"
               >
                 {showPassword ? (
                   <EyeSlashIcon className="h-5 w-5 text-gray-400"/>
@@ -159,7 +160,7 @@ const LoginForm = () => {
           <button
             type="submit"
             disabled={loading || Object.keys(errors).length > 0}
-            className={`w-full bg-base-black text-base-white py-3 px-4 rounded-md transition-all duration-300
+            className={`auth-submit w-full transition-all duration-300
             ${
               loading
                 ? "opacity-50 cursor-not-allowed"
@@ -197,11 +198,11 @@ const LoginForm = () => {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="auth-foot">
           Don't have an account?{" "}
           <Link
             to="/auth/register"
-            className="text-primary hover:text-primary-hover font-medium transition-colors duration-200"
+            className="auth-link"
           >
             Sign up
           </Link>

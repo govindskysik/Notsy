@@ -1,4 +1,5 @@
 const {StatusCodes}=require('http-status-codes');
+const mongoose = require('mongoose');
 const { CustomAPIError,UnauthenticatedError,NotFoundError,BadRequestError}=require('../../errors/index');
 const folder = require('../../models/notebook/folder');
 const topicModel=require('../../models/topic/topicIndex')
@@ -8,19 +9,17 @@ const createFolder = async (req, res) => {
     const name = req.body.name;
     const userId = req.user.userId;
     try {
-        if (!req.files || !req.files['coverImage']) {
-            throw new BadRequestError('please provide folder image');
+        if (!name?.trim()) {
+            throw new BadRequestError('please provide folder name');
         }
-        // Fix the image path
-        const imagePath = `/uploads/coverImages/${req.files['coverImage'][0].filename}`;
 
         const newFolder = await folder.findOne({ name: name, userId: userId });
         if (newFolder) {
             throw new BadRequestError('folder already exists');
         }
         const folderData = await folder.create({
-            name: name,
-            path: imagePath,
+            name: name.trim(),
+            path: `notebook-${new mongoose.Types.ObjectId().toString()}`,
             userId: userId
         });
         return res.status(StatusCodes.CREATED).json({

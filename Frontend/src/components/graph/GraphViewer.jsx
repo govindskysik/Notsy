@@ -29,8 +29,9 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
           const angle = (index / notebooks.length) * 2 * Math.PI;
           graph.addNode(notebook._id, {
             label: notebook.name,
-            size: 8, // Even smaller nodes
-            color: '#7D4FFF',
+            size: 10,
+            color: '#FF6500',
+            labelColor: '#F4F0E8',
             type: 'notebook',
             x: Math.cos(angle) * INITIAL_RADIUS,
             y: Math.sin(angle) * INITIAL_RADIUS
@@ -45,8 +46,9 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
           if (notebookPos) {
             graph.addNode(topic._id, {
               label: topic.title,
-              size: 6,
-              color: '#78E9D2',
+              size: 7,
+              color: '#78E0C4',
+              labelColor: '#F4F0E8',
               type: 'topic',
               x: notebookPos.x + (Math.random() - 0.5) * TOPIC_SPREAD,
               y: notebookPos.y + (Math.random() - 0.5) * TOPIC_SPREAD
@@ -56,7 +58,7 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
             graph.addEdge(topic.folderId, topic._id, {
               type: 'topic-notebook',
               size: 1, // Thinner edge
-              color: '#7D4FFF80' // Added transparency
+              color: '#FF650055'
             });
           }
         }
@@ -69,8 +71,9 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
           if (topicPos) {
             graph.addNode(resource._id, {
               label: resource.title || 'Resource',
-              size: 5, // Reduced from 7
-              color: '#FF4F5B',
+              size: 6,
+              color: '#E4B26D',
+              labelColor: '#F4F0E8',
               type: 'resource',
               x: topicPos.x + (Math.random() - 0.5) * RESOURCE_SPREAD,
               y: topicPos.y + (Math.random() - 0.5) * RESOURCE_SPREAD
@@ -79,7 +82,7 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
             graph.addEdge(resource.topicId, resource._id, {
               type: 'resource-topic',
               size: 1.5, // Thinner edge
-              color: '#FF4F5B'
+              color: '#E4B26D66'
             });
           }
         }
@@ -112,6 +115,9 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
           minCameraRatio: 0.05, // Allow more zoom out
           maxCameraRatio: 20,
           renderEdgeLabels: true,
+          labelColor: { attribute: 'labelColor' },
+          defaultNodeColor: '#B5B0A5',
+          defaultEdgeColor: '#B5B0A533',
           defaultEdgeType: 'line', // Changed from arrow for cleaner look
           labelDensity: 0.5, // Reduced label density
           labelGridCellSize: 100, // Increased label spacing
@@ -121,7 +127,7 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
             if (!data) {
               return {
                 size: 5,
-                color: '#999',
+                color: '#B5B0A5',
                 label: '',
                 type: 'circle',
                 dragEnabled: true // Enable dragging for nodes
@@ -131,11 +137,13 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
             const highlighted = data.highlighted || false;
             return {
               ...data,
-              size: (data.size || 5) * (highlighted ? 2.5 : 2),
-              color: highlighted ? '#000' : (data.color || '#999'),
+              size: (data.size || 5) * (highlighted ? 2.8 : 2),
+              color: highlighted ? '#FFF1D8' : (data.color || '#B5B0A5'),
+              labelColor: highlighted ? '#FFFFFF' : (data.labelColor || '#F4F0E8'),
               label: data.label || '',
               type: 'circle',
               zIndex: highlighted ? 1 : 0,
+              forceLabel: highlighted,
               dragEnabled: true // Enable dragging for nodes
             };
           },
@@ -143,7 +151,7 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
             if (!edge || !data) {
               return {
                 size: 1,
-                color: '#eee',
+                color: '#B5B0A533',
                 type: 'line'
               };
             }
@@ -157,14 +165,14 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
               return {
                 ...data,
                 size: data.size || 1,
-                color: highlighted ? '#000' : (data.color || '#eee'),
+                color: highlighted ? '#FF6500CC' : (data.color || '#B5B0A533'),
                 type: 'line'
               };
             } catch (error) {
               console.error('Error in edgeReducer:', error);
               return {
                 size: 1,
-                color: '#eee',
+                color: '#B5B0A533',
                 type: 'line'
               };
             }
@@ -252,10 +260,7 @@ const GraphViewer = ({ notebooks = [], topics = [], resources = [] }) => {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full rounded-xl shadow-sm"
-      style={{
-        background: 'linear-gradient(135deg, #7D4FFF20 0%, #7D4FFF10 100%)',
-      }}
+      className="graph-canvas w-full h-full rounded-xl"
     >
       {(!notebooks.length && !topics.length && !resources.length) && (
         <div className="flex justify-center items-center h-full text-gray-500">

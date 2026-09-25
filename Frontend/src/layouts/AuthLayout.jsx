@@ -3,20 +3,20 @@ import { assets } from '../assets/assets.js'
 
 const AuthLayout = () => {
   return (
-    <div 
-      className="min-h-screen flex flex-col gap-10 items-center justify-center bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${assets.background})` }}
-    >
-      <div className="flex flex-col mt-10 gap-5 items-center">
-        <div className="flex items-center space-x-2">
-          <img className="w-8 h-8" src={assets.logo} alt="Logo"/>
-          <h1 className="text-4xl font-bold">NOTSY</h1>
+    <div className="auth-shell">
+      <div className="auth-ambient auth-ambient-left" />
+      <div className="auth-ambient auth-ambient-right" />
+      <div className="auth-branding">
+        <div className="auth-brand-lockup">
+          <span className="auth-brand-mark"><img src={assets.logo} alt="" /></span>
+          <span>NOTSY</span>
         </div>
-        <p className="text-2xl font-semibold">Sign in to your account</p>
+        <p className="auth-heading">A clearer place<br /><em>to think.</em></p>
       </div>
-      <div className="max-w-md w-full p-8 bg-base-white rounded-xl shadow-lg bg-opacity-95 backdrop-blur-sm">
+      <div className="auth-card">
         <Outlet/>
       </div>
+      <p className="auth-caption">Your notes, questions, and next idea.</p>
     </div>
   );
 };

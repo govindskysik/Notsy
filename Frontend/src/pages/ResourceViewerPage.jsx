@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { goTo } from '../utils/navigation';
+import { readPageCache, writePageCache } from '../utils/navigation';
 import { useAuth } from '../context/AuthContext';
 import VideoResourceViewer from '../components/topic/VideoResourceViewer';
 import axios from '../utils/axios';
@@ -8,13 +10,16 @@ import { toast } from 'react-hot-toast';
 const ResourceViewerPage = () => {
   const { resourceId } = useParams();
   const { user } = useAuth();
-  const [resource, setResource] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cachedResourceRef = useRef(readPageCache(`notsy-resource:${resourceId}`));
+  const cachedResource = cachedResourceRef.current;
+  const [resource, setResource] = useState(cachedResource);
+  const [loading, setLoading] = useState(!cachedResource);
+  const handleBack = () => goTo(resource?.topicId ? `/dashboard/topic/${resource.topicId}` : '/dashboard', { replace: true });
 
   useEffect(() => {
     const fetchResource = async () => {
-        try {
-            setLoading(true);
+      try {
+            setLoading(!cachedResourceRef.current);
             const response = await axios.get(`/resource/${resourceId}`);
             console.log('Resource response:', response.data);
             
@@ -27,7 +32,8 @@ const ResourceViewerPage = () => {
                     resourceData.source = [resourceData.source];
                 }
                 
-                setResource(resourceData);
+            setResource(resourceData);
+            writePageCache(`notsy-resource:${resourceId}`, resourceData);
             } else {
                 throw new Error('Resource data not found in response');
             }
@@ -46,7 +52,7 @@ const ResourceViewerPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="resource-page resource-loading flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -54,16 +60,17 @@ const ResourceViewerPage = () => {
 
   if (!resource) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="resource-page resource-loading flex justify-center items-center h-screen">
         <p className="text-red-500">Resource not found</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-primary/20">
-      <div className="h-full">
-        <VideoResourceViewer resource={resource} />
+    <div className="resource-page h-screen w-screen overflow-hidden">
+      <header className="resource-page-header"><button type="button" onClick={handleBack} className="resource-back">← Back to topic</button><div className="resource-title"><span className="resource-type">{resource.type === 'pdf' ? 'PDF resource' : 'Video resource'}</span><strong>{resource.title || 'Study resource'}</strong></div><span className="resource-user">{user?.name || 'Workspace'}</span></header>
+      <div className="resource-page-body h-full">
+        <VideoResourceViewer key={resource._id} resource={resource} />
       </div>
     </div>
   );

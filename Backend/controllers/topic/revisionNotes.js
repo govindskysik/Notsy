@@ -49,13 +49,9 @@ const createRevisionNotes = async (req, res) => {
             parentChatId: null 
         }).sort({ createdAt: -1 });
 
-        if (!chats || chats.length === 0) {
-            throw new NotFoundError('No chat history found for this topic and user.');
-        }
-
         let messages = [];
         let summary = [];
-        for (const chat of chats) {
+        for (const chat of chats || []) {
             messages = [...messages, ...chat.messages];
             summary = [...summary, ...chat.summary];
         }

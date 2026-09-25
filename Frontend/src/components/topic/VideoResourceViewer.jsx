@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { sendChatMessage } from "../../services/chatService";
 import { getFlashcards, createFlashcards } from "../../services/flashcardService";
-import { BsChatDots, BsCardText, BsPencilSquare, BsPlayBtn, BsChevronUp, BsChevronDown } from "react-icons/bs";
+import { BsChatDots, BsCardText, BsPencilSquare, BsPlayBtn, BsFileEarmarkPdf, BsChevronUp, BsChevronDown } from "react-icons/bs";
 import { useAuth } from "../../context/AuthContext";
 import { assets } from "../../assets/assets";
 import { CHAT_MODES } from "../../constants/chatModes"; // Add this import
@@ -27,6 +27,7 @@ const VideoResourceViewer = ({ resource }) => {
   const [fetchingNotes, setFetchingNotes] = useState(false);
   const [showVideo, setShowVideo] = useState(true);
   const [pipVideo, setPipVideo] = useState(null);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true); // Add this line
   const [isTyping, setIsTyping] = useState(false);  // Add this if not already present
   const { user } = useAuth();
@@ -34,6 +35,9 @@ const VideoResourceViewer = ({ resource }) => {
   const videos = Array.isArray(resource?.source)
     ? resource.source
     : [resource?.source];
+  const pdfUrl = resource?.type === "pdf" && videos[0]
+    ? (videos[0].startsWith("http") ? videos[0] : `http://localhost:3000${videos[0].startsWith("/") ? "" : "/"}${videos[0]}`)
+    : "";
 
   const getVideoIdFromUrl = (url) => {
     if (!url) return null;
@@ -162,24 +166,23 @@ const VideoResourceViewer = ({ resource }) => {
 
   const sidebarItems = [
     { id: "chat", icon: <BsChatDots />, label: "Chat Assistant" },
-    { 
+    {
       id: "flashcards", 
       icon: <BsCardText />, 
-      label: "Flashcards",
+      label: "Create flashcards",
       loading: flashcardsLoading 
     },
     { 
       id: "notes", 
       icon: <BsPencilSquare />, 
-      label: "Notes",
+      label: "Generate notes",
       loading: fetchingNotes // Update this line
-    },
-    { id: "video", icon: <BsPlayBtn />, label: "Video" }
+    }
   ];
 
   const renderChatInterface = () => {
     return (
-      <div className="h-[90%] rounded-xl flex flex-col">
+      <div className="resource-chat h-full flex flex-col">
         {/* Welcome Section - Only show name greeting */}
         <AnimatePresence>
           {showWelcome && messages.length === 0 && (
@@ -187,27 +190,30 @@ const VideoResourceViewer = ({ resource }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="flex-none px-4 py-8"
+              className="resource-chat-welcome flex-none px-4 py-8"
             >
               <div className="flex flex-col items-center">
-                <h1 className="text-4xl font-bold text-gray-800 mb-8">
-                  Hello{user?.name ? `, ${user.name}` : ""}! 👋
-                </h1>
+                <h2>What would you like to understand?</h2>
+                <p>Ask about this resource, get a summary, or explore a concept.</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Resource Quick Access - Always visible */}
-        <div className="flex-none px-4 mb-6">
-          <div className="flex gap-4 flex-wrap justify-center">
-            {videos.map((video, idx) => (
+        <div className="resource-chat-sources flex-none px-4 mb-5">
+          <div className="flex gap-3 flex-wrap justify-center">
+            {resource.type === "pdf" ? (
+              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => setShowPdfPreview(true)} className="resource-source-chip flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all">
+                <BsFileEarmarkPdf className="text-primary text-xl" /><span className="font-medium">Open PDF</span>
+              </motion.button>
+            ) : videos.map((video, idx) => (
               <motion.button
                 key={idx}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setPipVideo(videos[idx])}
-                className="flex items-center gap-2 px-6 py-3 bg-gray-100/80 backdrop-blur-sm hover:bg-gray-200 rounded-xl transition-all shadow-sm hover:shadow-md"
+                className="resource-source-chip flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
               >
                 <BsPlayBtn className="text-primary text-xl" />
                 <span className="font-medium">Video {idx + 1}</span>
@@ -217,7 +223,7 @@ const VideoResourceViewer = ({ resource }) => {
         </div>
 
         {/* Messages Area with Enhanced Markdown */}
-        <div className="flex-1 overflow-y-auto px-4">
+        <div className="resource-chat-messages flex-1 overflow-y-auto px-4">
           <div className="max-w-3xl mx-auto space-y-6">
             {messages.map((msg, index) => (
               <motion.div
@@ -312,10 +318,9 @@ const VideoResourceViewer = ({ resource }) => {
         </div>
 
         {/* iOS Dock-style Input Area */}
-        <div className="flex-none px-4 py-6">
+        <div className="resource-chat-composer flex-none px-4 py-5">
           <div className="max-w-3xl mx-auto">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gray-100/80 backdrop-blur-sm rounded-2xl -z-10" />
+            <div className="resource-composer-box relative">
               <input
                 type="text"
                 value={message}
@@ -328,7 +333,7 @@ const VideoResourceViewer = ({ resource }) => {
               <button
                 onClick={handleSendMessage}
                 disabled={loading}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-hover disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="resource-send-button absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-hover disabled:opacity-50 transition-all duration-200"
               >
                 {loading ? "Sending..." : "Send"}
               </button>
@@ -465,7 +470,10 @@ const VideoResourceViewer = ({ resource }) => {
         }
       } catch (error) {
         console.error('Error fetching notes:', error);
-        toast.error('Failed to load notes');
+        // A topic without generated notes returns 404; that is an expected empty state.
+        if (error.response?.status !== 404) {
+          toast.error('Failed to load notes');
+        }
       } finally {
         setFetchingNotes(false);
       }
@@ -475,51 +483,19 @@ const VideoResourceViewer = ({ resource }) => {
   }, [resource?.topicId]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
-      <div 
-        className="w-full h-full bg-cover bg-center"
-        style={{ backgroundImage: `url(${assets.dashboardbg})` }}
-      >
-        <div className="flex h-full">
-          {/* Sidebar */}
-          <div className="w-64 backdrop-blur-sm">
-            <div className="h-full flex flex-col p-6">
-              {/* Header */}
-              <div className="flex items-center gap-2 mb-8">
-                <img className="w-6 h-6" src={assets.logo} alt="Logo" />
-                <h1 className="text-3xl font-bold">Resource</h1>
-              </div>
-
-              {/* Navigation */}
-              <nav className="flex-1">
-                {sidebarItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-2 w-full p-4 text-left text-sm font-bold tracking-wide rounded-xl transition-colors mb-2
-                      ${activeTab === item.id 
-                        ? "bg-primary text-white" 
-                        : "hover:bg-primary/20"}`}
-                  >
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="flex-1">{item.label}</span>
-                    {item.loading && (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                    )}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 p-5">
-            <div className="backdrop-blur-sm bg-base-white p-7 h-full rounded-xl shadow-sm">
-              {renderContent()}
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="resource-workspace">
+      <aside className="resource-tool-sidebar">
+        <div className="resource-sidebar-resource"><span className="resource-tool-eyebrow">{resource.type === 'pdf' ? 'PDF resource' : 'Video resource'}</span><h1>{resource.title || 'Untitled resource'}</h1><span className="resource-tool-meta">{videos.length} source{videos.length === 1 ? '' : 's'}</span></div>
+        <nav className="resource-tool-tabs" aria-label="Resource tools">
+          {sidebarItems.map((item) => <button key={item.id} type="button" onClick={() => setActiveTab(item.id)} className={activeTab === item.id ? 'is-active' : ''}><span>{item.icon}</span><span>{item.label}</span>{item.loading && <i className="resource-tab-loader" />}</button>)}
+        </nav>
+        {resource.type === "pdf" && <button type="button" className="resource-open-pdf" onClick={() => setShowPdfPreview(true)}><BsFileEarmarkPdf /> Open PDF</button>}
+      </aside>
+      <main className="resource-tool-main">
+        <div className="resource-tool-main-header"><span>Study assistant</span><span>Grounded in this resource</span></div>
+        <div className="resource-tool-content">{renderContent()}</div>
+      </main>
+      {showPdfPreview && resource.type === "pdf" && <div className="resource-pdf-preview" role="presentation" onMouseDown={() => setShowPdfPreview(false)}><section role="dialog" aria-modal="true" aria-label="PDF preview" onMouseDown={(event) => event.stopPropagation()}><div><span>PDF preview</span><button type="button" onClick={() => setShowPdfPreview(false)}>Close</button></div><iframe title="PDF resource" src={pdfUrl} /></section></div>}
     </div>
   );
 };
