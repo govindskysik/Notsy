@@ -18,6 +18,10 @@ Notsy is a connected study workspace for collecting material, understanding it, 
 
 ![Notsy dashboard](docs/screenshots/dashboard.png)
 
+### Knowledge map
+
+![Notsy knowledge map](docs/screenshots/map.png)
+
 ### Notebook workspace
 
 ![Notsy notebook workspace](docs/screenshots/notebook.png)
@@ -34,10 +38,6 @@ Notsy is a connected study workspace for collecting material, understanding it, 
 
 ![Notsy study chat](docs/screenshots/chat.png)
 
-### Knowledge map
-
-![Notsy knowledge map](docs/screenshots/map.png)
-
 ## What you can do
 
 - Create notebooks and group related topics inside them.
@@ -50,13 +50,13 @@ Notsy is a connected study workspace for collecting material, understanding it, 
 
 ## Tech stack
 
-| Area | Tools |
-| --- | --- |
-| Client | React, Vite, React Router, Axios, Tailwind CSS, Headless UI |
-| API | Node.js, Express, Mongoose, JWT, Multer |
-| Data | MongoDB |
+| Area                | Tools                                                                  |
+| ------------------- | ---------------------------------------------------------------------- |
+| Client              | React, Vite, React Router, Axios, Tailwind CSS, Headless UI            |
+| API                 | Node.js, Express, Mongoose, JWT, Multer                                |
+| Data                | MongoDB                                                                |
 | Resource processing | Multer uploads, Puppeteer transcript extraction, Python PDF extraction |
-| AI service | Django/DRF, LangChain, Gemini, Pinecone |
+| AI service          | Django/DRF, LangChain, Gemini, Pinecone                                |
 
 ## Project structure
 
@@ -178,17 +178,17 @@ Open the Vite address shown in the terminal (normally `http://localhost:5173`).
 
 ## Useful scripts
 
-| Location | Command | Purpose |
-| --- | --- | --- |
-| `Frontend` | `npm run dev` | Run the development client |
-| `Frontend` | `npm run build` | Create a production client build |
-| `Frontend` | `npm run lint` | Check client code with ESLint |
-| `Backend` | `npm run dev` | Run the API with automatic restarts |
-| `Backend` | `npm start` | Run the API normally |
-| Root | `npm run dev:frontend` | Start the frontend from the repository root |
-| Root | `npm run dev:backend` | Start the backend from the repository root |
-| Root | `npm run build` | Build the frontend |
-| Root | `npm run check` | Check local imports, backend syntax, and screenshot links |
+| Location   | Command                | Purpose                                                   |
+| ---------- | ---------------------- | --------------------------------------------------------- |
+| `Frontend` | `npm run dev`          | Run the development client                                |
+| `Frontend` | `npm run build`        | Create a production client build                          |
+| `Frontend` | `npm run lint`         | Check client code with ESLint                             |
+| `Backend`  | `npm run dev`          | Run the API with automatic restarts                       |
+| `Backend`  | `npm start`            | Run the API normally                                      |
+| Root       | `npm run dev:frontend` | Start the frontend from the repository root               |
+| Root       | `npm run dev:backend`  | Start the backend from the repository root                |
+| Root       | `npm run build`        | Build the frontend                                        |
+| Root       | `npm run check`        | Check local imports, backend syntax, and screenshot links |
 
 ## Configuration notes
 
