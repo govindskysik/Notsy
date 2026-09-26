@@ -1,3 +1,6 @@
+import scrollbarHide from 'tailwind-scrollbar-hide';
+import typography from '@tailwindcss/typography';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -7,9 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Space Grotesk', 'sans-serif'],
-      },
-      fontFamily: {
+        sans: ['DM Sans', 'sans-serif'],
         'do-hyeon': ['"Do Hyeon"', 'sans-serif'],
       },
       colors: {
@@ -159,7 +160,7 @@ export default {
         }
       })
     },
-    require('tailwind-scrollbar-hide'),
-    require('@tailwindcss/typography'),
+    scrollbarHide,
+    typography,
   ]
 }

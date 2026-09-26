@@ -1,0 +1,37 @@
+name: Project checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            Frontend/package-lock.json
+            Backend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci --prefix Frontend
+      - name: Install backend dependencies
+        run: npm ci --prefix Backend
+      - name: Check project structure
+        run: npm run check
+      - name: Lint frontend
+        run: npm run lint
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_API_URL: https://example.com/notsy
+      - name: Load backend routes and models
+        run: node -e "require('./Backend/routes'); console.log('Backend modules loaded')"
+      - name: Check Python syntax
+        run: python -m compileall -q notsy

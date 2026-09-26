@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
-import MainContent from "../components/notebook/NotebookMainContent";
-import axios from "../utils/axios";
+import NotebookContent from "../components/notebook/NotebookContent";
+import axios from "../services/apiClient";
 import { toast } from "react-hot-toast";
 import AddTopicModal from "../components/notebook/AddTopicModal";
 import { assets } from "../assets/assets";
@@ -93,9 +93,11 @@ const NotebookDashboard = () => {
       await axios.delete(`/topic/${topicId}`);
       setTopics(prev => prev.filter(topic => topic._id !== topicId));
       toast.success("Topic deleted successfully");
+      return true;
     } catch (error) {
       console.error("Error deleting topic:", error);
       toast.error("Failed to delete topic");
+      return false;
     }
   };
 
@@ -106,7 +108,7 @@ const NotebookDashboard = () => {
             <div className="dashboard-topbar-actions"><button type="button" className="dashboard-new-button" onClick={() => setIsModalOpen(true)}><PlusIcon /> New topic</button><button type="button" className="dashboard-back-button" onClick={() => goTo('/dashboard', { replace: true })}><ArrowLeftIcon /> Back</button></div>
           </header>
           <main className="notebook-page-content">
-            <MainContent notebook={notebook} topics={topics} resources={resources} loading={loading} onAddTopic={() => setIsModalOpen(true)} onDeleteTopic={handleDeleteTopic} />
+            <NotebookContent notebook={notebook} topics={topics} resources={resources} loading={loading} onAddTopic={() => setIsModalOpen(true)} onDeleteTopic={handleDeleteTopic} />
           </main>
 
       {/* Add Topic Modal */}

@@ -1,8 +1,13 @@
 const multer =require('multer');
 const path =require('path');
+const fs = require('fs');
 
 const storage=(destination)=>multer.diskStorage({
-    destination:destination,
+    destination: (req, file, cb) => {
+        // Upload directories are runtime data and are absent in a fresh clone.
+        const uploadPath = path.resolve(__dirname, '..', destination);
+        fs.mkdir(uploadPath, { recursive: true }, (error) => cb(error, uploadPath));
+    },
     filename:(req,file,cb)=>{
         cb(null,`${Date.now()}-${file.originalname}`);
     }

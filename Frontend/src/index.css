@@ -19,6 +19,26 @@
   --border: rgba(255, 255, 255, 0.09);
 }
 
+.delete-dialog { position: relative; z-index: 150; }
+.delete-dialog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.68); backdrop-filter: blur(12px); }
+.delete-dialog-positioner { position: fixed; inset: 0; display: grid; place-items: center; overflow-y: auto; padding: 1.25rem; }
+.delete-dialog-panel { max-height: calc(100dvh - 2.5rem); overflow-y: auto; }
+.delete-dialog-icon { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 1.5rem; color: var(--accent); background: rgba(255,101,0,.1); border: 1px solid rgba(255,101,0,.2); border-radius: 14px; }
+.delete-dialog-icon svg { width: 22px; height: 22px; }
+.delete-dialog-copy strong { color: var(--text-primary); font-weight: 500; overflow-wrap: anywhere; }
+.delete-dialog-confirm { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
+.delete-dialog-confirm svg { width: 16px; height: 16px; flex-shrink: 0; }
+.delete-dialog button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.delete-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+.notsy-toast { overflow-wrap: anywhere; }
+@media (max-width: 420px) {
+  .delete-dialog .frost-modal { padding: 1.5rem; }
+  .delete-dialog .frost-modal-actions { flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .delete-dialog .frost-modal, .notsy-toast { animation: none !important; }
+}
+
 html.is-navigating body::before {
   content: "";
   position: fixed;

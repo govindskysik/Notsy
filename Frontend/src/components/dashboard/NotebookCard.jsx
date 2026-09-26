@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import { toast } from 'react-hot-toast';
+import DeleteDialog from '../common/DeleteDialog';
 import { LuBookOpen, LuBrain, LuCode, LuFlaskConical, LuGraduationCap, LuLayers3, LuLightbulb, LuNotebookPen } from 'react-icons/lu';
 
 const notebookIcons = [LuBookOpen, LuBrain, LuCode, LuFlaskConical, LuGraduationCap, LuLayers3, LuLightbulb, LuNotebookPen];
@@ -20,20 +20,17 @@ const NotebookCard = ({ notebook, onDelete }) => {
 
   const NotebookIcon = getNotebookIcon(notebook.name);
 
-  const handleDelete = async (e) => {
-    e.stopPropagation(); // Stop event from bubbling up
+  const handleDelete = async () => {
     if (deleting) return;
 
     try {
       setDeleting(true);
-      await onDelete(notebook._id);
-      toast.success('Notebook deleted successfully');
+      const deleted = await onDelete(notebook._id);
+      if (deleted !== false) setShowConfirm(false);
     } catch (error) {
       console.error('Error in delete handler:', error);
-      toast.error('Failed to delete notebook');
     } finally {
       setDeleting(false);
-      setShowConfirm(false);
     }
   };
 
@@ -58,6 +55,8 @@ const NotebookCard = ({ notebook, onDelete }) => {
 
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
+          type="button"
+          aria-label={`Delete ${notebook.name}`}
           onClick={handleDeleteClick}
           disabled={deleting}
           className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:opacity-50"
@@ -66,47 +65,7 @@ const NotebookCard = ({ notebook, onDelete }) => {
         </button>
       </div>
 
-      {/* Confirmation Modal */}
-      {showConfirm && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center z-50"
-          onClick={e => e.stopPropagation()} // Stop modal clicks from propagating
-        >
-          <div 
-            className="absolute inset-0 bg-black opacity-50" 
-            onClick={e => {
-              e.stopPropagation();
-              !deleting && setShowConfirm(false);
-            }}
-          />
-          <div 
-            className="relative bg-white p-6 rounded-lg shadow-xl"
-            onClick={e => e.stopPropagation()} // Stop modal content clicks from propagating
-          >
-            <h3 className="text-lg font-semibold mb-4">Delete Notebook?</h3>
-            <p className="mb-6">This action cannot be undone.</p>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowConfirm(false);
-                }}
-                disabled={deleting}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteDialog open={showConfirm} onClose={() => setShowConfirm(false)} onConfirm={handleDelete} busy={deleting} kind="notebook" name={notebook.name} />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import axios from '../utils/axios';
+import axios from './apiClient';
 
 export const getFlashcards = async (topicId) => {
     try {

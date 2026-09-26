@@ -1,7 +1,7 @@
 {
-  "name": "frontend",
+  "name": "notsy-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,14 +12,8 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
-    "@react-pdf/renderer": "^4.3.0",
     "axios": "^1.8.4",
-    "browser-image-compression": "^2.0.2",
-    "daisyui": "^5.0.12",
     "date-fns": "^4.1.0",
-    "graphology": "^0.26.0",
-    "graphology-layout-force": "^0.2.4",
-    "graphology-layout-forceatlas2": "^0.10.1",
     "jwt-decode": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -27,10 +21,11 @@
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
-    "react-pdf": "^9.2.1",
     "react-router-dom": "^7.4.1",
-    "sigma": "^3.0.1",
-    "tailwind-scrollbar-hide": "^2.0.0"
+    "tailwind-scrollbar-hide": "^2.0.0",
+    "framer-motion": "^12.9.2",
+    "highlight.js": "^11.11.1",
+    "prismjs": "^1.30.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

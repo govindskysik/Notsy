@@ -1,13 +1,13 @@
 const express=require('express')
 const router=express.Router();
 
-const folderRouter=require('./folder');
-const topicRouter=require('./topic');
-const uploadRouter=require('./upload');
-const resourceRouter=require('./resource');
-const chatRouter=require('./chat')
-const revisionNotesRouter=require('./revisionNotes')
-const flashcardsRouter=require('./flashcards')
+const folderRouter=require('./notebook.routes');
+const topicRouter=require('./topic.routes');
+const uploadRouter=require('./upload.routes');
+const resourceRouter=require('./resource.routes');
+const chatRouter=require('./chat.routes')
+const revisionNotesRouter=require('./revisionNote.routes')
+const flashcardsRouter=require('./flashcard.routes')
 
 router.use('/folder',folderRouter);
 router.use('/topic',topicRouter);

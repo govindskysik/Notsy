@@ -3,7 +3,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 const express =require("express")
 const app=express()
 const connectDB=require('./db/connect')
-const authenticateUser = require('./middlewares/authenticate');
+const authenticateUser = require('./middleware/authenticate');
 require('dotenv').config();
 const cors = require('cors');
 const path = require('path');
@@ -42,7 +42,7 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-app.use('/notsy/auth', require('./routes/auth'));
+app.use('/notsy/auth', require('./routes/auth.routes'));
 app.use('/notsy', authenticateUser, require('./routes/index'));
 
 // Listen function & connect to database

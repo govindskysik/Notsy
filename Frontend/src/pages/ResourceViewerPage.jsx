@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { goTo } from '../utils/navigation';
 import { readPageCache, writePageCache } from '../utils/navigation';
-import { useAuth } from '../context/AuthContext';
-import VideoResourceViewer from '../components/topic/VideoResourceViewer';
-import axios from '../utils/axios';
+import { useAuth } from '../hooks/useAuth';
+import StudyWorkspace from '../components/resource/StudyWorkspace';
+import axios from '../services/apiClient';
 import { toast } from 'react-hot-toast';
 
 const ResourceViewerPage = () => {
@@ -70,7 +70,7 @@ const ResourceViewerPage = () => {
     <div className="resource-page h-screen w-screen overflow-hidden">
       <header className="resource-page-header"><button type="button" onClick={handleBack} className="resource-back">← Back to topic</button><div className="resource-title"><span className="resource-type">{resource.type === 'pdf' ? 'PDF resource' : 'Video resource'}</span><strong>{resource.title || 'Study resource'}</strong></div><span className="resource-user">{user?.name || 'Workspace'}</span></header>
       <div className="resource-page-body h-full">
-        <VideoResourceViewer key={resource._id} resource={resource} />
+        <StudyWorkspace key={resource._id} resource={resource} />
       </div>
     </div>
   );

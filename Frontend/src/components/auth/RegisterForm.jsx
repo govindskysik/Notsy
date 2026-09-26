@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import axios from '../../utils/axios'
-import { useAuth } from '../../context/AuthContext' // Add this import
+import axios from '../../services/apiClient'
+import { useAuth } from '../../hooks/useAuth' // Add this import
 
 const RegisterForm = () => {
   const navigate = useNavigate()
@@ -30,7 +30,7 @@ const RegisterForm = () => {
           delete newErrors.name
         }
         break
-      case 'email':
+      case 'email': {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!value) {
           newErrors.email = 'Email is required'
@@ -40,6 +40,7 @@ const RegisterForm = () => {
           delete newErrors.email
         }
         break
+      }
       case 'password':
         if (!value) {
           newErrors.password = 'Password is required'
@@ -82,7 +83,8 @@ const RegisterForm = () => {
 
     try {
       setLoading(true);
-      const { confirmPassword, ...registerData } = formData;
+      const { name, email, password } = formData;
+      const registerData = { name, email, password };
       const response = await axios.post('/auth/register', registerData);
 
       if (response.data.token) {

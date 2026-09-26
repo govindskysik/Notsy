@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRightOnRectangleIcon, PlusIcon } from '@heroicons/react/24/outline';
 import KnowledgeMap from '../components/graph/KnowledgeMap';
 import { assets } from '../assets/assets';
-import axios from '../utils/axios';
-import { useAuth } from '../context/AuthContext';
+import axios from '../services/apiClient';
+import { useAuth } from '../hooks/useAuth';
 import { goTo } from '../utils/navigation';
 
 const GraphViewPage = () => {

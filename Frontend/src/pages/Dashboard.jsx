@@ -8,10 +8,10 @@ import {
 } from "@heroicons/react/24/outline";
 import { assets } from "../assets/assets";
 import { toast } from "react-hot-toast";
-import { useAuth } from "../context/AuthContext";
-import MainContent from "../components/dashboard/MainContent";
+import { useAuth } from "../hooks/useAuth";
+import DashboardContent from "../components/dashboard/DashboardContent";
 import AddNotebookModal from "../components/dashboard/AddNotebookModal";
-import axios from "../utils/axios";
+import axios from "../services/apiClient";
 import { goTo } from "../utils/navigation";
 
 const Dashboard = () => {
@@ -81,30 +81,20 @@ const Dashboard = () => {
     }
   };
 
-  // Delete notebook handler with optimistic updates
+  // Keep the card and its confirmation visible until deletion succeeds.
   const handleDeleteNotebook = async (notebookId) => {
-    const previousNotebooks = notebooks;
     try {
-      // Store current notebooks state for rollback
-      // Optimistically update UI
-      setNotebooks((prevNotebooks) =>
-        prevNotebooks.filter((notebook) => notebook._id !== notebookId),
-      );
-
-      // Make API call
       await axios.delete(`/folder/${notebookId}`);
+      setNotebooks((previous) => previous.filter((notebook) => notebook._id !== notebookId));
 
       // Show success message
       toast.success("Notebook deleted successfully");
+      return true;
     } catch (error) {
       console.error("Error deleting notebook:", error);
 
-      // Rollback on error
-      setNotebooks(previousNotebooks);
       toast.error(error.response?.data?.message || "Failed to delete notebook");
-
-      // Refresh notebooks list
-      fetchNotebooks();
+      return false;
     }
   };
 
@@ -208,7 +198,7 @@ const Dashboard = () => {
         </div>
       </header>
       <main id="home-top" className="dashboard-home-content">
-        <MainContent
+        <DashboardContent
           notebooks={notebooks}
           loading={loading}
           onDeleteNotebook={handleDeleteNotebook}

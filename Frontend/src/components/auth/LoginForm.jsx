@@ -2,9 +2,9 @@ import React, {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {toast} from "react-hot-toast";
 import {EyeIcon, EyeSlashIcon} from "@heroicons/react/24/outline";
-import axios from "../../utils/axios";
+import axios from "../../services/apiClient";
 
-import {useAuth} from "../../context/AuthContext"; // Add this import
+import {useAuth} from "../../hooks/useAuth"; // Add this import
 
 const LoginForm = () => {
   const navigate = useNavigate();

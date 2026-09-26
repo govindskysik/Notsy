@@ -1,4 +1,4 @@
-import axios from '../utils/axios';
+import axios from './apiClient';
 
 export const uploadPDFs = async (files, topicId) => {
   if (!Array.isArray(files)) {
